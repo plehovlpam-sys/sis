@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liquid Glass</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #e8e8e8;
+            min-height: 100vh;
+            font-family: system-ui, sans-serif;
+            overflow: hidden;
+        }
+
+        .container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #e8e8e8;
+        }
+
+        .bg-content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 50px;
+            width: 85%;
+            height: 85%;
+            z-index: 0;
+        }
+
+        .shape-circle {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: #d0d0d0;
+            border: 3px solid #999;
+            flex-shrink: 0;
+        }
+        .shape-rect {
+            width: 240px;
+            height: 140px;
+            background: #c5c5c5;
+            border: 3px solid #999;
+            flex-shrink: 0;
+        }
+        .bg-text {
+            font-size: 3.5rem;
+            font-weight: 300;
+            color: #777;
+            letter-spacing: 5px;
+            text-align: center;
+            width: 100%;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        /* SVG фильтр с displacement map */
+        svg {
+            position: absolute;
+            width: 0;
+            height: 0;
+        }
+
+        /* Линза с эффектом Liquid Glass */
+        .lens {
+            position: absolute;
+            width: 340px;
+            height: 340px;
+            border-radius: 24px;
+            z-index: 10;
+            cursor: grab;
+            touch-action: none;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 
+                0 8px 32px rgba(0,0,0,0.08),
+                inset 0 1px 0 rgba(255,255,255,0.2);
+            
+            /* Основной эффект */
+            backdrop-filter: blur(6px) url(#displacementFilter);
+            -webkit-backdrop-filter: blur(6px) url(#displacementFilter);
+            
+            /* Fallback для Safari */
+            @supports not (hanging-punctuation:first) {
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+            }
+        }
+
+        /* Текст внутри линзы */
+        .lens-label {
+            color: rgba(0,0,0,0.3);
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            background: rgba(255,255,255,0.1);
+            padding: 6px 14px;
+            border-radius: 12px;
+            backdrop-filter: blur(2px);
+            border: 1px solid rgba(255,255,255,0.1);
+            pointer-events: none;
+            user-select: none;
+        }
+
+        /* Ручки изменения размера */
+        .resize-handle {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: rgba(0,0,0,0.3);
+            border: 2px solid rgba(255,255,255,0.6);
+            border-radius: 50%;
+            z-index: 20;
+            cursor: nwse-resize;
+            backdrop-filter: blur(2px);
+        }
+        .resize-handle.tl { top: -7px; left: -7px; cursor: nw-resize; }
+        .resize-handle.tr { top: -7px; right: -7px; cursor: ne-resize; }
+        .resize-handle.bl { bottom: -7px; left: -7px; cursor: sw-resize; }
+        .resize-handle.br { bottom: -7px; right: -7px; cursor: se-resize; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="container">
+    <!-- Фоновый контент -->
+    <div class="bg-content">
+        <div class="shape-circle"></div>
+        <div class="shape-rect"></div>
+        <div class="bg-text">ТЕКСТ ПОД ПРИЗМОЙ<br>ИСКАЖАЕТСЯ</div>
+    </div>
+
+    <!-- SVG с displacement map -->
+    <svg xmlns="http://www.w3.org/2000/svg">
+        <filter id="displacementFilter" x="-20%" y="-20%" width="140%" height="140%">
+            <!-- Загружаем карту искажений из файла displacement.txt -->
+            <feImage href="displacement.txt" preserveAspectRatio="none" result="noise"/>
+            <feDisplacementMap
+                in="SourceGraphic"
+                in2="noise"
+                scale="80"
+                xChannelSelector="R"
+                yChannelSelector="G"
+            />
+        </filter>
+    </svg>
+
+    <!-- Линза -->
+    <div class="lens" id="lens">
+        <div class="lens-label">✦ призма ✦</div>
+        <div class="resize-handle tl" data-dir="tl"></div>
+        <div class="resize-handle tr" data-dir="tr"></div>
+        <div class="resize-handle bl" data-dir="bl"></div>
+        <div class="resize-handle br" data-dir="br"></div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const lens = document.getElementById('lens');
+        let lensWidth = 340;
+        let lensHeight = 340;
+
+        // Центрируем линзу
+        function centerLens() {
+            lens.style.left = ((window.innerWidth - lensWidth) / 2) + 'px';
+            lens.style.top = ((window.innerHeight - lensHeight) / 2) + 'px';
+        }
+        centerLens();
+
+        // ---- ПЕРЕМЕЩЕНИЕ ----
+        let isDragging = false;
+        let startX, startY, startLeft, startTop;
+
+        lens.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.resize-handle')) return;
+            isDragging = true;
+            const rect = lens.getBoundingClientRect();
+            startX = e.clientX;
+            startY = e.clientY;
+            startLeft = rect.left;
+            startTop = rect.top;
+            lens.style.cursor = 'grabbing';
+            document.addEventListener('mousemove', onDrag);
+            document.addEventListener('mouseup', onDragEnd);
+            e.preventDefault();
+        });
+
+        lens.addEventListener('touchstart', (e) => {
+            if (e.target.closest('.resize-handle')) return;
+            const touch = e.touches[0];
+            isDragging = true;
+            const rect = lens.getBoundingClientRect();
+            startX = touch.clientX;
+            startY = touch.clientY;
+            startLeft = rect.left;
+            startTop = rect.top;
+            document.addEventListener('touchmove', onDragTouch, { passive: false });
+            document.addEventListener('touchend', onDragEnd);
+            e.preventDefault();
+        }, { passive: false });
+
+        function onDrag(e) {
+            if (!isDragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            moveLens(startLeft + dx, startTop + dy);
+        }
+
+        function onDragTouch(e) {
+            if (!isDragging) return;
+            const touch = e.touches[0];
+            const dx = touch.clientX - startX;
+            const dy = touch.clientY - startY;
+            moveLens(startLeft + dx, startTop + dy);
+            e.preventDefault();
+        }
+
+        function moveLens(left, top) {
+            const rect = lens.getBoundingClientRect();
+            const maxX = window.innerWidth - rect.width;
+            const maxY = window.innerHeight - rect.height;
+            left = Math.max(0, Math.min(left, maxX));
+            top = Math.max(0, Math.min(top, maxY));
+            lens.style.left = left + 'px';
+            lens.style.top = top + 'px';
+        }
+
+        function onDragEnd() {
+            if (isDragging) {
+                isDragging = false;
+                lens.style.cursor = 'grab';
+                document.removeEventListener('mousemove', onDrag);
+                document.removeEventListener('mouseup', onDragEnd);
+                document.removeEventListener('touchmove', onDragTouch);
+                document.removeEventListener('touchend', onDragEnd);
+            }
+        }
+
+        // ---- ИЗМЕНЕНИЕ РАЗМЕРА ----
+        let resizeData = null;
+
+        document.querySelectorAll('.resize-handle').forEach(handle => {
+            handle.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const dir = handle.dataset.dir;
+                const rect = lens.getBoundingClientRect();
+                resizeData = {
+                    dir: dir,
+                    startX: e.clientX,
+                    startY: e.clientY,
+                    startWidth: rect.width,
+                    startHeight: rect.height,
+                    startLeft: rect.left,
+                    startTop: rect.top
+                };
+                document.addEventListener('mousemove', onResize);
+                document.addEventListener('mouseup', onResizeEnd);
+            });
+
+            handle.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const touch = e.touches[0];
+                const dir = handle.dataset.dir;
+                const rect = lens.getBoundingClientRect();
+                resizeData = {
+                    dir: dir,
+                    startX: touch.clientX,
+                    startY: touch.clientY,
+                    startWidth: rect.width,
+                    startHeight: rect.height,
+                    startLeft: rect.left,
+                    startTop: rect.top
+                };
+                document.addEventListener('touchmove', onResizeTouch, { passive: false });
+                document.addEventListener('touchend', onResizeEnd);
+            }, { passive: false });
+        });
+
+        function onResize(e) {
+            if (!resizeData) return;
+            resizeElement(e.clientX - resizeData.startX, e.clientY - resizeData.startY);
+        }
+
+        function onResizeTouch(e) {
+            if (!resizeData) return;
+            const touch = e.touches[0];
+            resizeElement(touch.clientX - resizeData.startX, touch.clientY - resizeData.startY);
+            e.preventDefault();
+        }
+
+        function resizeElement(dx, dy) {
+            let newWidth = resizeData.startWidth;
+            let newHeight = resizeData.startHeight;
+            let newLeft = resizeData.startLeft;
+            let newTop = resizeData.startTop;
+            const minSize = 60;
+
+            const dir = resizeData.dir;
+            if (dir === 'br') {
+                newWidth = Math.max(minSize, resizeData.startWidth + dx);
+                newHeight = Math.max(minSize, resizeData.startHeight + dy);
+            } else if (dir === 'bl') {
+                newWidth = Math.max(minSize, resizeData.startWidth - dx);
+                newHeight = Math.max(minSize, resizeData.startHeight + dy);
+                newLeft = resizeData.startLeft + (resizeData.startWidth - newWidth);
+            } else if (dir === 'tr') {
+                newWidth = Math.max(minSize, resizeData.startWidth + dx);
+                newHeight = Math.max(minSize, resizeData.startHeight - dy);
+                newTop = resizeData.startTop + (resizeData.startHeight - newHeight);
+            } else if (dir === 'tl') {
+                newWidth = Math.max(minSize, resizeData.startWidth - dx);
+                newHeight = Math.max(minSize, resizeData.startHeight - dy);
+                newLeft = resizeData.startLeft + (resizeData.startWidth - newWidth);
+                newTop = resizeData.startTop + (resizeData.startHeight - newHeight);
+            }
+
+            newLeft = Math.max(0, newLeft);
+            newTop = Math.max(0, newTop);
+            if (newLeft + newWidth > window.innerWidth) {
+                newWidth = window.innerWidth - newLeft;
+            }
+            if (newTop + newHeight > window.innerHeight) {
+                newHeight = window.innerHeight - newTop;
+            }
+            newWidth = Math.max(minSize, newWidth);
+            newHeight = Math.max(minSize, newHeight);
+
+            lens.style.width = newWidth + 'px';
+            lens.style.height = newHeight + 'px';
+            lens.style.left = newLeft + 'px';
+            lens.style.top = newTop + 'px';
+
+            resizeData.startWidth = newWidth;
+            resizeData.startHeight = newHeight;
+            resizeData.startLeft = newLeft;
+            resizeData.startTop = newTop;
+        }
+
+        function onResizeEnd() {
+            resizeData = null;
+            document.removeEventListener('mousemove', onResize);
+            document.removeEventListener('mouseup', onResizeEnd);
+            document.removeEventListener('touchmove', onResizeTouch);
+            document.removeEventListener('touchend', onResizeEnd);
+        }
+
+        // Обновление при ресайзе окна
+        window.addEventListener('resize', () => {
+            const rect = lens.getBoundingClientRect();
+            lensWidth = rect.width;
+            lensHeight = rect.height;
+            centerLens();
+        });
+
+        lens.addEventListener('dragstart', (e) => e.preventDefault());
+    })();
+</script>
+</body>
+</html>
