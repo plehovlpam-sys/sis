@@ -23,6 +23,7 @@
             height: 100vh;
             background: #ffffff;
             overflow: hidden;
+            transition: background 0.15s ease;
         }
         .logo {
             position: absolute;
@@ -32,6 +33,11 @@
             z-index: 5;
             pointer-events: none;
             user-select: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .logo.show {
+            opacity: 1;
         }
         .logo img {
             display: block;
@@ -47,13 +53,18 @@
             background: transparent;
             z-index: 10;
             pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        #log.show {
+            opacity: 1;
         }
     </style>
 </head>
 <body>
-<div class="screen">
-    <div class="logo">
-        <img src="logokindle.png" alt="Kindle">
+<div class="screen" id="screen">
+    <div class="logo" id="logoContainer">
+        <img src="biosimitation.png" alt="BIOS" id="logoImg">
     </div>
     <canvas id="log"></canvas>
 </div>
@@ -99,6 +110,9 @@
         '',
         'login[1890]: root login on \'ttyS0\''
     ];
+
+    // Сообщение для Recovery
+    const recoveryMessage = 'If you want to start recovery boot sector press volume + three times!!! Do not press anything to normal boot';
 
     // ============================================================
     // 3. ПОСТРОЕНИЕ КАРТЫ СИМВОЛОВ
@@ -153,15 +167,34 @@
     }
 
     // ============================================================
-    // 5. НАСТРОЙКИ КАНВАСА
+    // 5. ОТРИСОВКА ТЕКСТА НА КАНВАСЕ
+    // ============================================================
+    function renderTextOnCanvas(text, rowOffset) {
+        const lines = text.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const row = rowOffset + i;
+            if (row >= TERM_ROWS) break;
+            for (let col = 0; col < line.length && col < TERM_COLS; col++) {
+                const code = line.charCodeAt(col);
+                if (code >= 0x20 && code <= 0x7E) {
+                    drawChar(ctx, fontImage, code, col * CHAR_W, row * CHAR_H);
+                }
+            }
+        }
+    }
+
+    // ============================================================
+    // 6. НАСТРОЙКИ КАНВАСА
     // ============================================================
     const TERM_COLS = 80;
     const TERM_ROWS = 30;
 
     const canvas = document.getElementById('log');
     const ctx = canvas.getContext('2d');
+    const screen = document.getElementById('screen');
+    const logoContainer = document.getElementById('logoContainer');
 
-    // ФИКСИРОВАННЫЙ РАЗМЕР (шрифт остаётся 12×22 пикселя)
     canvas.width = TERM_COLS * CHAR_W;
     canvas.height = TERM_ROWS * CHAR_H;
 
@@ -170,26 +203,22 @@
     canvas.style.left = '0';
 
     // ============================================================
-    // 6. АДАПТАЦИЯ ПОД МОБИЛКИ — МАСШТАБИРУЕМ КАНВАС
+    // 7. АДАПТАЦИЯ ПОД МОБИЛКИ
     // ============================================================
     function fitCanvas() {
         const screenWidth = window.innerWidth;
         const screenHeight = window.innerHeight;
         
-        // Реальный размер канваса в пикселях
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
         
-        // Вычисляем масштаб, чтобы влезло по ширине и высоте
         const scaleX = screenWidth / canvasWidth;
         const scaleY = screenHeight / canvasHeight;
         const scale = Math.min(scaleX, scaleY);
         
-        // Применяем масштаб
         canvas.style.transform = `scale(${scale})`;
         canvas.style.transformOrigin = 'top left';
         
-        // Центрируем по горизонтали и вертикали
         const offsetX = (screenWidth - canvasWidth * scale) / 2;
         const offsetY = (screenHeight - canvasHeight * scale) / 2;
         canvas.style.left = offsetX + 'px';
@@ -197,14 +226,46 @@
     }
 
     // ============================================================
-    // 7. ПОСТРОЧНЫЙ ВЫВОД
+    // 8. СМЕНА ФОНА С "ДЁРГАНЬЕМ"
+    // ============================================================
+    function flickerBackground(targetColor, steps = 2, delay = 100) {
+        return new Promise((resolve) => {
+            let step = 0;
+            const currentColor = screen.style.background || '#ffffff';
+            
+            function doStep() {
+                if (step < steps) {
+                    // Дёрганое переключение: сначала одна половина, потом вторая
+                    if (step === 0) {
+                        screen.style.background = targetColor;
+                    } else if (step === 1) {
+                        // Добавляем эффект "половинчатого" обновления через градиент
+                        screen.style.background = `linear-gradient(to right, ${targetColor} 50%, ${currentColor} 50%)`;
+                    } else if (step === 2) {
+                        screen.style.background = targetColor;
+                    }
+                    step++;
+                    setTimeout(doStep, delay);
+                } else {
+                    screen.style.background = targetColor;
+                    resolve();
+                }
+            }
+            doStep();
+        });
+    }
+
+    // ============================================================
+    // 9. ПОСТРОЧНЫЙ ВЫВОД
     // ============================================================
     let currentLine = 0;
     const lineDelay = 20;
+    let isBootComplete = false;
 
     function renderNextLine() {
         if (currentLine >= logLines.length) {
             console.log('✅ Boot complete!');
+            isBootComplete = true;
             return;
         }
 
@@ -221,18 +282,62 @@
 
         if (currentLine < logLines.length) {
             setTimeout(renderNextLine, lineDelay);
+        } else {
+            isBootComplete = true;
         }
     }
 
     // ============================================================
-    // 8. ЗАПУСК
+    // 10. ОСНОВНАЯ ЛОГИКА ЗАГРУЗКИ
+    // ============================================================
+    async function startBootSequence() {
+        // --- ШАГ 1: Белый фон, ничего нет, ждём 2.5 секунды ---
+        screen.style.background = '#ffffff';
+        canvas.classList.remove('show');
+        logoContainer.classList.remove('show');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        await new Promise(resolve => setTimeout(resolve, 2500));
+
+        // --- ШАГ 2: Дёрганая смена на чёрный фон (эффект BIOS) ---
+        await flickerBackground('#000000', 3, 100);
+
+        // --- ШАГ 3: Показываем логотип biosimitation.png ---
+        logoContainer.classList.add('show');
+        // Переключаем изображение на biosimitation.png
+        document.getElementById('logoImg').src = 'biosimitation.png';
+
+        // --- ШАГ 4: Выводим сообщение Recovery ---
+        canvas.classList.add('show');
+        renderTextOnCanvas(recoveryMessage, 10); // выводим с 10-й строки
+
+        // --- ШАГ 5: Ждём 3 секунды ---
+        await new Promise(resolve => setTimeout(resolve, 3000));
+
+        // --- ШАГ 6: Дёрганая смена обратно на белый фон ---
+        await flickerBackground('#ffffff', 3, 100);
+
+        // --- ШАГ 7: Ждём 0.8 секунды ---
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        // --- ШАГ 8: Меняем лого на Kindle и запускаем логи ---
+        document.getElementById('logoImg').src = 'logokindle.png';
+        logoContainer.classList.add('show');
+        
+        // Очищаем канвас и запускаем логи
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        currentLine = 0;
+        isBootComplete = false;
+        renderNextLine();
+    }
+
+    // ============================================================
+    // 11. ЗАПУСК
     // ============================================================
     function start() {
         buildCharMap();
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
         fitCanvas();
-        currentLine = 0;
-        renderNextLine();
+        startBootSequence();
     }
 
     fontImage.onload = function() {
@@ -252,18 +357,19 @@
     }
 
     // ============================================================
-    // 9. ПЕРЕЗАПУСК ПО КЛИКУ / ТАПУ
+    // 12. ПЕРЕЗАПУСК ПО КЛИКУ
     // ============================================================
     document.addEventListener('click', function() {
-        if (currentLine >= logLines.length) {
+        if (isBootComplete) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             currentLine = 0;
-            renderNextLine();
+            isBootComplete = false;
+            startBootSequence();
         }
     });
 
     // ============================================================
-    // 10. ПЕРЕСЧЁТ МАСШТАБА ПРИ ПОВОРОТЕ / ИЗМЕНЕНИИ РАЗМЕРА
+    // 13. ПЕРЕСЧЁТ МАСШТАБА
     // ============================================================
     window.addEventListener('resize', fitCanvas);
     window.addEventListener('orientationchange', function() {
