@@ -2,371 +2,613 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liquid Glass</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kindle UI</title>
     <style>
+        @font-face {
+            font-family: 'KindleFont';
+            src: url('/standard.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
-        body {
-            background: #e8e8e8;
-            min-height: 100vh;
-            font-family: system-ui, sans-serif;
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+            font-family: 'KindleFont', sans-serif;
+            color: #000;
             overflow: hidden;
         }
 
-        .container {
-            position: relative;
+        .kindle-device {
             width: 100vw;
             height: 100vh;
+            background-color: #ffffff;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: #e8e8e8;
+            position: relative;
+            overflow: hidden;
         }
 
-        .bg-content {
+        /* --- Grid/Layout Utility --- */
+        .flex-row { display: flex; align-items: center; }
+        .flex-grow { flex-grow: 1; }
+
+        /* --- Top Navigation Bar --- */
+        .top-nav {
+            height: 48px;
+            min-height: 48px;
             display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            align-items: center;
-            gap: 50px;
-            width: 85%;
-            height: 85%;
-            z-index: 0;
-        }
-
-        .shape-circle {
-            width: 180px;
-            height: 180px;
-            border-radius: 50%;
-            background: #d0d0d0;
-            border: 3px solid #999;
+            border-bottom: 1px solid #000;
+            background-color: #fff;
             flex-shrink: 0;
-        }
-        .shape-rect {
-            width: 240px;
-            height: 140px;
-            background: #c5c5c5;
-            border: 3px solid #999;
-            flex-shrink: 0;
-        }
-        .bg-text {
-            font-size: 3.5rem;
-            font-weight: 300;
-            color: #777;
-            letter-spacing: 5px;
-            text-align: center;
             width: 100%;
-            padding: 20px;
-            line-height: 1.6;
+            z-index: 20;
         }
-
-        /* SVG фильтр с displacement map */
-        svg {
-            position: absolute;
-            width: 0;
-            height: 0;
-        }
-
-        /* Линза с эффектом Liquid Glass */
-        .lens {
-            position: absolute;
-            width: 340px;
-            height: 340px;
-            border-radius: 24px;
-            z-index: 10;
-            cursor: grab;
-            touch-action: none;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 
-                0 8px 32px rgba(0,0,0,0.08),
-                inset 0 1px 0 rgba(255,255,255,0.2);
-            
-            /* Основной эффект */
-            backdrop-filter: blur(6px) url(#displacementFilter);
-            -webkit-backdrop-filter: blur(6px) url(#displacementFilter);
-            
-            /* Fallback для Safari */
-            @supports not (hanging-punctuation:first) {
-                backdrop-filter: blur(8px);
-                -webkit-backdrop-filter: blur(8px);
-            }
-        }
-
-        /* Текст внутри линзы */
-        .lens-label {
-            color: rgba(0,0,0,0.3);
-            font-size: 0.9rem;
-            letter-spacing: 2px;
-            background: rgba(255,255,255,0.1);
-            padding: 6px 14px;
-            border-radius: 12px;
-            backdrop-filter: blur(2px);
-            border: 1px solid rgba(255,255,255,0.1);
-            pointer-events: none;
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            border-right: 1px solid #000;
+            font-size: 10px;
+            text-align: center;
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
             user-select: none;
         }
-
-        /* Ручки изменения размера */
-        .resize-handle {
-            position: absolute;
-            width: 14px;
-            height: 14px;
-            background: rgba(0,0,0,0.3);
-            border: 2px solid rgba(255,255,255,0.6);
-            border-radius: 50%;
-            z-index: 20;
-            cursor: nwse-resize;
-            backdrop-filter: blur(2px);
+        .nav-item:last-child { border-right: none; }
+        .nav-icon {
+            width: 20px; height: 20px; margin-bottom: 2px;
+            display: flex; align-items: center; justify-content: center;
         }
-        .resize-handle.tl { top: -7px; left: -7px; cursor: nw-resize; }
-        .resize-handle.tr { top: -7px; right: -7px; cursor: ne-resize; }
-        .resize-handle.bl { bottom: -7px; left: -7px; cursor: sw-resize; }
-        .resize-handle.br { bottom: -7px; right: -7px; cursor: se-resize; }
+        .nav-icon img { width: 100%; height: 100%; display: block; }
+
+        .search-container {
+            flex: 2; display: flex; align-items: center; padding: 0 10px;
+            border-right: 1px solid #000; height: 100%; cursor: pointer; user-select: none;
+        }
+        .search-icon { width: 18px; height: 18px; margin-right: 8px; display: flex; align-items: center; justify-content: center; }
+        .search-icon img { width: 100%; height: 100%; display: block; }
+        .search-text { font-size: 16px; color: #000; letter-spacing: 0.5px; }
+
+        .menu-dots {
+            width: 48px; height: 100%; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; cursor: pointer; user-select: none;
+        }
+        .menu-dots img { width: 20px; height: 20px; display: block; }
+
+        /* --- Content Area --- */
+        .content-area {
+            flex: 1;
+            width: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            position: relative;
+        }
+
+        /* --- Dashboard Screen --- */
+        .dashboard-scroll-area { padding: 15px 15px 20px 15px; position: relative; width: 100%; }
+        .section-title { font-size: 13px; font-weight: bold; color: #000; margin-bottom: 12px; display: flex; align-items: center; cursor: pointer; }
+        .title-arrow { font-size: 16px; margin-left: 2px; margin-top: -2px; }
+
+        .library-row { display: flex; gap: 12px; margin-bottom: 25px; width: 100%; min-height: 120px; border: 1px dashed #ccc; padding: 15px; justify-content: center; align-items: center; flex-direction: column;}
+        .library-row.has-books { border: none; padding: 0; flex-direction: row; justify-content: flex-start; align-items: stretch; min-height: auto; }
+        .empty-library-text { font-size: 14px; color: #888; text-align: center; }
+        
+        .book-card-large { width: 45%; height: 170px; border: 1px solid #000; background-color: #d6d6d6; position: relative; display: flex; flex-direction: column; justify-content: flex-end; padding: 8px; flex-shrink: 0; cursor: pointer;}
+        .book-logo-large { position: absolute; top: 10px; left: 10px; width: 40px; height: 40px; }
+        .book-logo-large img { width: 100%; height: 100%; display: block; }
+        .progress-badge-large { position: absolute; top: 0; right: 0; width: 0; height: 0; border-left: 25px solid transparent; border-right: 0 solid transparent; border-top: 25px solid #000; }
+        .progress-badge-large span { position: absolute; top: -22px; right: -16px; color: #fff; font-size: 10px; font-weight: bold; }
+        .book-title-large { font-size: 15px; font-weight: bold; color: #000; line-height: 1.2; word-break: break-word;}
+        .book-author-large { font-size: 11px; color: #000; margin-top: 2px; word-break: break-word;}
+
+        .lists-section { margin-bottom: 25px; width: 100%; }
+        .list-item { font-size: 14px; color: #000; margin-top: 8px; cursor: pointer; }
+        .list-illustration { display: flex; justify-content: center; margin-top: 10px; position: relative; left: 20px; width: 100%; }
+        .list-img-container { width: 100px; height: auto; }
+        .list-img-container img { width: 100%; height: auto; display: block; }
+
+        .help-section { border-top: 1px solid #000; padding-top: 15px; margin-bottom: 15px; width: 100%; }
+        .help-row { display: flex; gap: 15px; width: 100%; }
+        .help-img-container { width: 80px; height: 80px; border: 1px solid #000; background-color: #e6e6e6; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .help-img-container img { width: 100%; height: 100%; display: block; object-fit: cover; }
+        .help-content { display: flex; flex-direction: column; justify-content: center; width: 100%; }
+        .help-content p { font-size: 12px; line-height: 1.3; color: #000; margin-bottom: 8px; }
+        .help-btn { border: 1px solid #000; background: #fff; padding: 4px 12px; font-size: 11px; font-family: inherit; color: #000; width: fit-content; cursor: pointer; }
+
+        .bottom-hint { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #000; padding-top: 12px; font-size: 12px; color: #000; margin-top: 5px; cursor: pointer; width: 100%; }
+        .bottom-hint .arrow-down { font-size: 18px; line-height: 1; margin-bottom: 2px; }
+
+        .scrollbar-track { position: absolute; right: 1px; top: 15px; bottom: 20px; width: 10px; background: transparent; pointer-events: none; }
+        .scrollbar-thumb { width: 8px; height: 150px; background-color: #000; position: absolute; top: 50px; right: 1px; pointer-events: none; }
+
+        /* --- Settings Screen --- */
+        .settings-scroll-area { padding: 10px 15px 20px 15px; display: none; width: 100%; }
+        .settings-list-item { display: flex; align-items: center; padding: 14px 0; border-bottom: 1px solid #ccc; cursor: pointer; position: relative; width: 100%; }
+        .settings-list-item:last-child { border-bottom: none; }
+        .settings-icon-wrapper { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; margin-right: 15px; flex-shrink: 0; }
+        .settings-icon-wrapper svg { width: 22px; height: 22px; stroke: #000; stroke-width: 2; fill: none; }
+        .settings-text-wrapper { flex-grow: 1; display: flex; flex-direction: column; min-width: 0; }
+        .settings-title { font-size: 14px; font-weight: bold; color: #000; }
+        .settings-subtitle { font-size: 10px; color: #000; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .settings-arrow { font-size: 20px; color: #000; margin-left: auto; padding-left: 10px; font-weight: 300; flex-shrink: 0; }
+
+        /* --- Reader Screen --- */
+        #readerOverlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #f5f3ee; display: none; flex-direction: column; z-index: 40;
+        }
+        .reader-header { height: 48px; display: none; border-bottom: 1px solid #000; width: 100%; flex-shrink: 0; background: #fff; align-items: center; padding: 0 15px; justify-content: space-between; }
+        .reader-header.active { display: flex; }
+        .reader-close-btn { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px;}
+        .reader-close-btn img { width: 20px; height: 20px; display: block; }
+        .reader-title { font-size: 14px; font-weight: bold; text-align: center; flex-grow: 1; padding: 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .reader-body { flex: 1; width: 100%; padding: 25px 20px; overflow-y: auto; line-height: 1.6; font-size: 18px; position: relative; }
+        .reader-body p { margin-bottom: 1em; text-align: justify; }
+        .reader-page-controls { display: none; height: 60px; width: 100%; flex-shrink: 0; border-top: 1px solid #000; background: #fff; align-items: center; justify-content: space-between; padding: 0 15px; }
+        .reader-page-controls.active { display: flex; }
+        .page-btn { border: 1px solid #000; background: #fff; padding: 8px 20px; font-family: inherit; font-size: 14px; cursor: pointer; }
+        .page-btn:disabled { opacity: 0.3; }
+        .page-info { font-size: 14px; }
+
+        /* --- Search Overlay Components --- */
+        #searchOverlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #fff; display: none; flex-direction: column; z-index: 50;
+        }
+        .search-header { height: 48px; display: flex; border-bottom: 1px solid #000; width: 100%; flex-shrink: 0; }
+        .search-back-btn { width: 48px; height: 100%; display: flex; align-items: center; justify-content: center; border-right: 1px solid #000; cursor: pointer; }
+        .search-back-btn img { width: 20px; height: 20px; display: block; }
+        .search-input-wrapper { flex: 1; display: flex; align-items: center; padding: 0 10px; }
+        .search-input-wrapper input { width: 100%; border: none; outline: none; font-size: 16px; font-family: 'KindleFont', sans-serif; background: transparent; }
+
+        .search-content-area { flex: 1; width: 100%; display: flex; align-items: flex-start; justify-content: center; padding-top: 40px; }
+        .search-hint-box { display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .search-hint-box img { width: 120px; height: auto; display: block; margin-bottom: 20px; }
+        .search-hint-text { font-size: 14px; color: #000; }
+
+        /* Keyboard Container */
+        .keyboard-container {
+            width: 100%; padding: 10px 8px 15px 8px;
+            background: #fff; border-top: 1px solid #000; flex-shrink: 0;
+            transform: translateY(100%); transition: transform 0.2s;
+            transition-timing-function: cubic-bezier(0.55, 0.05, 0.65, 0.45);
+            position: relative;
+        }
+        .keyboard-container.active { transform: translateY(0); }
+        
+        .kb-row { display: flex; justify-content: center; margin-bottom: 6px; gap: 4px; width: 100%; }
+        .kb-row.hidden { display: none; }
+        .kb-page { display: block; }
+        .kb-page.hidden { display: none; }
+        
+        .kb-key {
+            height: 42px; min-width: 30px; flex: 1; max-width: 36px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; font-family: 'KindleFont', sans-serif; color: #000;
+            border: none; background: transparent; cursor: pointer;
+            text-transform: lowercase;
+        }
+        .kb-key.caps-active { text-transform: uppercase; }
+        .kb-key.special { flex: 1.5; max-width: 48px; }
+        .kb-key.wide { flex: 4; max-width: 160px; border: 1px solid #000; background: transparent; font-size: 11px; font-weight: bold; }
+        .kb-key.img-key { flex: 1.5; max-width: 48px; padding: 0; display: flex; align-items: center; justify-content: center; }
+        .kb-key.img-key img { width: 24px; height: 24px; display: block; }
+        .kb-key:active { background-color: #eee; }
+        .kb-bottom-row { margin-top: 4px; }
     </style>
 </head>
 <body>
+    <div class="kindle-device">
+        <!-- Top Nav -->
+        <div class="top-nav">
+            <div class="nav-item" id="homeBtn">
+                <div class="nav-icon"><img src="homescreenBAR.png" alt="home"></div>главный экран
+            </div>
+            <div class="nav-item" id="backBtn">
+                <div class="nav-icon"><img src="backBAR.png" alt="back"></div>назад
+            </div>
+            <div class="nav-item" id="settingsBtn">
+                <div class="nav-icon"><img src="settingsBAR.png" alt="settings"></div>настройки
+            </div>
+            <div class="nav-item">
+                <div class="nav-icon"><img src="storeBAR.png" alt="store"></div>магазин
+            </div>
+            <div class="search-container" id="searchOpenBtn">
+                <div class="search-icon"><img src="searchBAR.png" alt="search"></div><span class="search-text">Поиск</span>
+            </div>
+            <div class="menu-dots"><img src="troetoBAR.png" alt="menu"></div>
+        </div>
 
-<div class="container" id="container">
-    <!-- Фоновый контент -->
-    <div class="bg-content">
-        <div class="shape-circle"></div>
-        <div class="shape-rect"></div>
-        <div class="bg-text">ТЕКСТ ПОД ПРИЗМОЙ<br>ИСКАЖАЕТСЯ</div>
+        <!-- Content Area -->
+        <div class="content-area" id="scrollContainer">
+            <div id="dashboardView" class="dashboard-scroll-area">
+                <div class="section-title"><span>ВАША БИБЛИОТЕКА</span><span class="title-arrow">›</span></div>
+                
+                <div class="library-row" id="libraryContainer">
+                    <div class="empty-library-text" id="emptyLibraryMsg">Ваша библиотека пуста.<br>Загрузите книги в настройках.</div>
+                </div>
+
+                <div class="lists-section">
+                    <div class="section-title"><span>СПИСКИ КНИГ</span><span class="title-arrow">›</span></div>
+                    <div class="list-item">Начните вести список книг <span class="title-arrow">›</span></div>
+                    <div class="list-illustration"><div class="list-img-container"><img src="spis.png" alt="Books list"></div></div>
+                </div>
+                <div class="help-section">
+                    <div class="section-title"><span>Узнайте все о Kindle</span><span class="title-arrow">›</span></div>
+                    <div class="help-row">
+                        <div class="help-img-container"><img src="learn.png" alt="Learn Kindle"></div>
+                        <div class="help-content"><p>Ознакомьтесь с возможностями<br>устройства Kindle и узнайте, как<br>перемещаться по его функциям</p><button class="help-btn">Подробнее</button></div>
+                    </div>
+                </div>
+                <div class="bottom-hint"><span>Проведите пальцем вверх, чтобы увидеть другие предложения.</span><span class="arrow-down">⌄</span></div>
+                <div class="scrollbar-track"><div class="scrollbar-thumb"></div></div>
+            </div>
+
+            <div id="settingsView" class="settings-scroll-area">
+                <div class="settings-list-item"><div class="settings-icon-wrapper"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div><div class="settings-text-wrapper"><div class="settings-title">Ваша учетная запись</div><div class="settings-subtitle">не зарегистрировано</div></div><div class="settings-arrow">›</div></div>
+                <div class="settings-list-item"><div class="settings-icon-wrapper"><svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg></div><div class="settings-text-wrapper"><div class="settings-title">Беспроводная связь</div></div><div class="settings-arrow">›</div></div>
+                <div class="settings-list-item"><div class="settings-icon-wrapper"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg></div><div class="settings-text-wrapper"><div class="settings-title">Параметры устройства</div></div><div class="settings-arrow">›</div></div>
+                <div class="settings-list-item"><div class="settings-icon-wrapper"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></div><div class="settings-text-wrapper"><div class="settings-title">Параметры чтения</div></div><div class="settings-arrow">›</div></div>
+                <div class="settings-list-item"><div class="settings-icon-wrapper"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path><path d="M2 12h20"></path></svg></div><div class="settings-text-wrapper"><div class="settings-title">Язык и словари</div></div><div class="settings-arrow">›</div></div>
+                <div class="settings-list-item"><div class="settings-icon-wrapper"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="2" x2="12" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line></svg></div><div class="settings-text-wrapper"><div class="settings-title">Специальные возможности</div></div><div class="settings-arrow">›</div></div>
+                <div class="settings-list-item"><div class="settings-icon-wrapper"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div><div class="settings-text-wrapper"><div class="settings-title">Справка и руководства пользователя</div></div><div class="settings-arrow">›</div></div>
+                
+                <!-- Custom Import Item -->
+                <div class="settings-list-item" id="uploadBookItem" style="border-top: 2px solid #000; margin-top: 10px;">
+                    <div class="settings-icon-wrapper"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg></div>
+                    <div class="settings-text-wrapper"><div class="settings-title">Загрузка книг минуя Магазин Amazon</div></div>
+                    <div class="settings-arrow">›</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reader Overlay -->
+        <div id="readerOverlay">
+            <div class="reader-header" id="readerHeader">
+                <div class="reader-close-btn" id="readerCloseBtn"><img src="backBAR.png" alt="back"> Назад</div>
+                <div class="reader-title" id="readerTitle">Книга</div>
+                <div style="width: 60px;"></div>
+            </div>
+            <div class="reader-body" id="readerBody">
+                <div id="readerTextContent"></div>
+            </div>
+            <div class="reader-page-controls" id="readerControls">
+                <button class="page-btn" id="prevPageBtn">‹ Назад</button>
+                <div class="page-info" id="pageInfo">Стр. 1 / 1</div>
+                <button class="page-btn" id="nextPageBtn">Далее ›</button>
+            </div>
+        </div>
+
+        <!-- Search Overlay -->
+        <div id="searchOverlay">
+            <div class="search-header">
+                <div class="search-back-btn" id="searchCloseBtn"><img src="backBAR.png" alt="back"></div>
+                <div class="search-input-wrapper"><input type="text" id="searchInput" placeholder="Поиск" autocomplete="off"></div>
+            </div>
+            <div class="search-content-area" id="searchHintArea">
+                <div class="search-hint-box"><img src="searchhint.png" alt="Hint"><div class="search-hint-text">Начните искать книги или предложения на Amazon</div></div>
+            </div>
+
+            <!-- Keyboard -->
+            <div class="keyboard-container" id="customKeyboard">
+                <!-- Page 0: RU -->
+                <div id="kbPage0" class="kb-page">
+                    <div class="kb-row">
+                        <button class="kb-key" data-value="й">й</button><button class="kb-key" data-value="ц">ц</button><button class="kb-key" data-value="у">у</button><button class="kb-key" data-value="к">к</button><button class="kb-key" data-value="е">е</button><button class="kb-key" data-value="н">н</button><button class="kb-key" data-value="г">г</button><button class="kb-key" data-value="ш">ш</button><button class="kb-key" data-value="щ">щ</button><button class="kb-key" data-value="з">з</button><button class="kb-key" data-value="х">х</button><button class="kb-key" data-value="ъ">ъ</button>
+                    </div>
+                    <div class="kb-row">
+                        <button class="kb-key" data-value="ф">ф</button><button class="kb-key" data-value="ы">ы</button><button class="kb-key" data-value="в">в</button><button class="kb-key" data-value="а">а</button><button class="kb-key" data-value="п">п</button><button class="kb-key" data-value="р">р</button><button class="kb-key" data-value="о">о</button><button class="kb-key" data-value="л">л</button><button class="kb-key" data-value="д">д</button><button class="kb-key" data-value="ж">ж</button><button class="kb-key" data-value="э">э</button>
+                    </div>
+                    <div class="kb-row">
+                        <button class="kb-key img-key" id="kbCapsRU"><img src="keybcapslock.png" alt="Caps"></button>
+                        <button class="kb-key" data-value="я">я</button><button class="kb-key" data-value="ч">ч</button><button class="kb-key" data-value="с">с</button><button class="kb-key" data-value="м">м</button><button class="kb-key" data-value="и">и</button><button class="kb-key" data-value="т">т</button><button class="kb-key" data-value="ь">ь</button><button class="kb-key" data-value="б">б</button><button class="kb-key" data-value="ю">ю</button><button class="kb-key" data-value="ё">ё</button>
+                        <button class="kb-key img-key" id="kbBackspace"><img src="keybbackspace.png" alt="Bksp"></button>
+                    </div>
+                    <div class="kb-row kb-bottom-row">
+                        <button class="kb-key special" id="kbNums">123</button>
+                        <button class="kb-key img-key" id="kbLangRU"><img src="keybswitchlang.png" alt="Lang"></button>
+                        <button class="kb-key wide" id="kbSpace">ПРОБЕЛ</button>
+                        <button class="kb-key special" data-value=".">.</button>
+                        <button class="kb-key img-key" id="kbEnter"><img src="keybenter.png" alt="Enter"></button>
+                    </div>
+                </div>
+
+                <!-- Page 1: EN -->
+                <div id="kbPage1" class="kb-page hidden">
+                    <div class="kb-row">
+                        <button class="kb-key" data-value="q">q</button><button class="kb-key" data-value="w">w</button><button class="kb-key" data-value="e">e</button><button class="kb-key" data-value="r">r</button><button class="kb-key" data-value="t">t</button><button class="kb-key" data-value="y">y</button><button class="kb-key" data-value="u">u</button><button class="kb-key" data-value="i">i</button><button class="kb-key" data-value="o">o</button><button class="kb-key" data-value="p">p</button>
+                    </div>
+                    <div class="kb-row">
+                        <button class="kb-key" data-value="a">a</button><button class="kb-key" data-value="s">s</button><button class="kb-key" data-value="d">d</button><button class="kb-key" data-value="f">f</button><button class="kb-key" data-value="g">g</button><button class="kb-key" data-value="h">h</button><button class="kb-key" data-value="j">j</button><button class="kb-key" data-value="k">k</button><button class="kb-key" data-value="l">l</button>
+                    </div>
+                    <div class="kb-row">
+                        <button class="kb-key img-key" id="kbCapsEN"><img src="keybcapslock.png" alt="Caps"></button>
+                        <button class="kb-key" data-value="z">z</button><button class="kb-key" data-value="x">x</button><button class="kb-key" data-value="c">c</button><button class="kb-key" data-value="v">v</button><button class="kb-key" data-value="b">b</button><button class="kb-key" data-value="n">n</button><button class="kb-key" data-value="m">m</button>
+                        <button class="kb-key img-key" id="kbBackspaceEN"><img src="keybbackspace.png" alt="Bksp"></button>
+                    </div>
+                    <div class="kb-row kb-bottom-row">
+                        <button class="kb-key special" id="kbNumsEN">123</button>
+                        <button class="kb-key img-key" id="kbLangEN"><img src="keybswitchlang.png" alt="Lang"></button>
+                        <button class="kb-key wide" id="kbSpaceEN">SPACE</button>
+                        <button class="kb-key special" data-value=".">.</button>
+                        <button class="kb-key img-key" id="kbEnterEN"><img src="keybenter.png" alt="Enter"></button>
+                    </div>
+                </div>
+
+                <!-- Page 2: NUM/SYM -->
+                <div id="kbPage2" class="kb-page hidden">
+                    <div class="kb-row">
+                        <button class="kb-key" data-value="1">1</button><button class="kb-key" data-value="2">2</button><button class="kb-key" data-value="3">3</button><button class="kb-key" data-value="4">4</button><button class="kb-key" data-value="5">5</button><button class="kb-key" data-value="6">6</button><button class="kb-key" data-value="7">7</button><button class="kb-key" data-value="8">8</button><button class="kb-key" data-value="9">9</button><button class="kb-key" data-value="0">0</button>
+                    </div>
+                    <div class="kb-row">
+                        <button class="kb-key" data-value="-">-</button><button class="kb-key" data-value="/">/</button><button class="kb-key" data-value=":">:</button><button class="kb-key" data-value=";">;</button><button class="kb-key" data-value="(">(</button><button class="kb-key" data-value=")">)</button><button class="kb-key" data-value="$">$</button><button class="kb-key" data-value="&">&</button><button class="kb-key" data-value="@">@</button><button class="kb-key" data-value="“">“</button>
+                    </div>
+                    <div class="kb-row">
+                        <button class="kb-key special" id="kbBackNum">ABC</button>
+                        <button class="kb-key" data-value="!">!</button><button class="kb-key" data-value="?">?</button><button class="kb-key" data-value=",">,</button><button class="kb-key" data-value=".">.</button><button class="kb-key" data-value="'">'</button>
+                        <button class="kb-key img-key" id="kbBackspaceNUM"><img src="keybbackspace.png" alt="Bksp"></button>
+                    </div>
+                    <div class="kb-row kb-bottom-row">
+                        <button class="kb-key special" id="kbNumsBack">123</button>
+                        <button class="kb-key wide" id="kbSpaceNUM">ПРОБЕЛ</button>
+                        <button class="kb-key img-key" id="kbEnterNUM"><img src="keybenter.png" alt="Enter"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- SVG с displacement map -->
-    <svg xmlns="http://www.w3.org/2000/svg">
-        <filter id="displacementFilter" x="-20%" y="-20%" width="140%" height="140%">
-            <!-- Загружаем карту искажений из файла displacement.txt -->
-            <feImage href="displacement.txt" preserveAspectRatio="none" result="noise"/>
-            <feDisplacementMap
-                in="SourceGraphic"
-                in2="noise"
-                scale="80"
-                xChannelSelector="R"
-                yChannelSelector="G"
-            />
-        </filter>
-    </svg>
+    <script>
+        // --- Navigation ---
+        const dashboardView = document.getElementById('dashboardView');
+        const settingsView = document.getElementById('settingsView');
+        const scrollContainer = document.getElementById('scrollContainer');
+        const libraryContainer = document.getElementById('libraryContainer');
+        const emptyLibraryMsg = document.getElementById('emptyLibraryMsg');
 
-    <!-- Линза -->
-    <div class="lens" id="lens">
-        <div class="lens-label">✦ призма ✦</div>
-        <div class="resize-handle tl" data-dir="tl"></div>
-        <div class="resize-handle tr" data-dir="tr"></div>
-        <div class="resize-handle bl" data-dir="bl"></div>
-        <div class="resize-handle br" data-dir="br"></div>
-    </div>
-</div>
-
-<script>
-    (function() {
-        const lens = document.getElementById('lens');
-        let lensWidth = 340;
-        let lensHeight = 340;
-
-        // Центрируем линзу
-        function centerLens() {
-            lens.style.left = ((window.innerWidth - lensWidth) / 2) + 'px';
-            lens.style.top = ((window.innerHeight - lensHeight) / 2) + 'px';
+        function showDashboard() { 
+            dashboardView.style.display = 'block'; 
+            settingsView.style.display = 'none'; 
+            scrollContainer.scrollTop = 0; 
+            renderLibrary();
         }
-        centerLens();
+        function showSettings() { 
+            dashboardView.style.display = 'none'; 
+            settingsView.style.display = 'block'; 
+            scrollContainer.scrollTop = 0; 
+        }
 
-        // ---- ПЕРЕМЕЩЕНИЕ ----
-        let isDragging = false;
-        let startX, startY, startLeft, startTop;
+        document.getElementById('homeBtn').addEventListener('click', showDashboard);
+        document.getElementById('backBtn').addEventListener('click', showDashboard);
+        document.getElementById('settingsBtn').addEventListener('click', showSettings);
 
-        lens.addEventListener('mousedown', (e) => {
-            if (e.target.closest('.resize-handle')) return;
-            isDragging = true;
-            const rect = lens.getBoundingClientRect();
-            startX = e.clientX;
-            startY = e.clientY;
-            startLeft = rect.left;
-            startTop = rect.top;
-            lens.style.cursor = 'grabbing';
-            document.addEventListener('mousemove', onDrag);
-            document.addEventListener('mouseup', onDragEnd);
-            e.preventDefault();
+        // --- Swipe Up ---
+        let touchStartY = 0;
+        scrollContainer.addEventListener('touchstart', function(e) { touchStartY = e.touches[0].clientY; });
+        scrollContainer.addEventListener('touchend', function(e) {
+            if (dashboardView.style.display !== 'none') {
+                let touchEndY = e.changedTouches[0].clientY;
+                if (touchStartY - touchEndY > 50) alert('Открытие других предложений (функция-заглушка)');
+            }
         });
 
-        lens.addEventListener('touchstart', (e) => {
-            if (e.target.closest('.resize-handle')) return;
-            const touch = e.touches[0];
-            isDragging = true;
-            const rect = lens.getBoundingClientRect();
-            startX = touch.clientX;
-            startY = touch.clientY;
-            startLeft = rect.left;
-            startTop = rect.top;
-            document.addEventListener('touchmove', onDragTouch, { passive: false });
-            document.addEventListener('touchend', onDragEnd);
-            e.preventDefault();
-        }, { passive: false });
+        // --- Book Upload & Storage ---
+        let library = JSON.parse(localStorage.getItem('kindleLibrary')) || [];
 
-        function onDrag(e) {
-            if (!isDragging) return;
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
-            moveLens(startLeft + dx, startTop + dy);
-        }
-
-        function onDragTouch(e) {
-            if (!isDragging) return;
-            const touch = e.touches[0];
-            const dx = touch.clientX - startX;
-            const dy = touch.clientY - startY;
-            moveLens(startLeft + dx, startTop + dy);
-            e.preventDefault();
-        }
-
-        function moveLens(left, top) {
-            const rect = lens.getBoundingClientRect();
-            const maxX = window.innerWidth - rect.width;
-            const maxY = window.innerHeight - rect.height;
-            left = Math.max(0, Math.min(left, maxX));
-            top = Math.max(0, Math.min(top, maxY));
-            lens.style.left = left + 'px';
-            lens.style.top = top + 'px';
-        }
-
-        function onDragEnd() {
-            if (isDragging) {
-                isDragging = false;
-                lens.style.cursor = 'grab';
-                document.removeEventListener('mousemove', onDrag);
-                document.removeEventListener('mouseup', onDragEnd);
-                document.removeEventListener('touchmove', onDragTouch);
-                document.removeEventListener('touchend', onDragEnd);
+        function renderLibrary() {
+            libraryContainer.innerHTML = '';
+            if (library.length === 0) {
+                libraryContainer.classList.remove('has-books');
+                libraryContainer.innerHTML = '<div class="empty-library-text">Ваша библиотека пуста.<br>Загрузите книги в настройках.</div>';
+            } else {
+                libraryContainer.classList.add('has-books');
+                // Show only first book for demo UI
+                const book = library[0];
+                const bookCard = document.createElement('div');
+                bookCard.className = 'book-card-large';
+                bookCard.innerHTML = `
+                    <div class="book-logo-large"><img src="booklable.png" alt="Book"></div>
+                    <div class="book-title-large">${book.title || 'Без названия'}</div>
+                    <div class="book-author-large">${book.author || 'Неизвестный автор'}</div>
+                `;
+                bookCard.addEventListener('click', function() { openReader(book); });
+                libraryContainer.appendChild(bookCard);
             }
         }
 
-        // ---- ИЗМЕНЕНИЕ РАЗМЕРА ----
-        let resizeData = null;
-
-        document.querySelectorAll('.resize-handle').forEach(handle => {
-            handle.addEventListener('mousedown', (e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                const dir = handle.dataset.dir;
-                const rect = lens.getBoundingClientRect();
-                resizeData = {
-                    dir: dir,
-                    startX: e.clientX,
-                    startY: e.clientY,
-                    startWidth: rect.width,
-                    startHeight: rect.height,
-                    startLeft: rect.left,
-                    startTop: rect.top
+        document.getElementById('uploadBookItem').addEventListener('click', function() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.txt,.epub,.fb2';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    const content = ev.target.result;
+                    // Simulate parsing (simple demo: assume whole file is content, title is filename)
+                    const newBook = {
+                        id: Date.now(),
+                        title: file.name.replace(/\.[^/.]+$/, ""),
+                        author: "Загружено пользователем",
+                        content: content.substring(0, 10000) // Trim for demo to avoid lag
+                    };
+                    library.push(newBook);
+                    localStorage.setItem('kindleLibrary', JSON.stringify(library));
+                    renderLibrary();
+                    alert('Книга "' + newBook.title + '" успешно загружена!');
                 };
-                document.addEventListener('mousemove', onResize);
-                document.addEventListener('mouseup', onResizeEnd);
+                reader.readAsText(file);
+            };
+            input.click();
+        });
+
+        // --- Reader Functionality ---
+        const readerOverlay = document.getElementById('readerOverlay');
+        const readerHeader = document.getElementById('readerHeader');
+        const readerControls = document.getElementById('readerControls');
+        const readerTitle = document.getElementById('readerTitle');
+        const readerTextContent = document.getElementById('readerTextContent');
+        const prevPageBtn = document.getElementById('prevPageBtn');
+        const nextPageBtn = document.getElementById('nextPageBtn');
+        const pageInfo = document.getElementById('pageInfo');
+        
+        let currentBook = null;
+        let currentPageIndex = 0;
+        let pages = [];
+
+        function splitIntoPages(text, charsPerPage = 900) {
+            const pagesArr = [];
+            for (let i = 0; i < text.length; i += charsPerPage) {
+                pagesArr.push(text.substring(i, i + charsPerPage));
+            }
+            return pagesArr.length > 0 ? pagesArr : [text || "Пустая страница"];
+        }
+
+        function openReader(book) {
+            currentBook = book;
+            currentPageIndex = 0;
+            readerTitle.textContent = book.title || "Книга";
+            pages = splitIntoPages(book.content || "Текст книги не найден.");
+            
+            readerOverlay.style.display = 'flex';
+            readerHeader.classList.add('active');
+            readerControls.classList.add('active');
+            renderPage();
+        }
+
+        function renderPage() {
+            if (!pages.length) return;
+            readerTextContent.innerHTML = '<p>' + pages[currentPageIndex].replace(/\n/g, '</p><p>') + '</p>';
+            pageInfo.textContent = `Стр. ${currentPageIndex + 1} / ${pages.length}`;
+            prevPageBtn.disabled = currentPageIndex === 0;
+            nextPageBtn.disabled = currentPageIndex === pages.length - 1;
+            readerTextContent.scrollTop = 0;
+        }
+
+        document.getElementById('readerCloseBtn').addEventListener('click', function() {
+            readerOverlay.style.display = 'none';
+            readerHeader.classList.remove('active');
+            readerControls.classList.remove('active');
+        });
+
+        prevPageBtn.addEventListener('click', function() {
+            if (currentPageIndex > 0) { currentPageIndex--; renderPage(); }
+        });
+        nextPageBtn.addEventListener('click', function() {
+            if (currentPageIndex < pages.length - 1) { currentPageIndex++; renderPage(); }
+        });
+
+        // Close reader on touch outside controls? Just use Back button.
+
+
+        // --- Search ---
+        const searchOverlay = document.getElementById('searchOverlay');
+        const searchInput = document.getElementById('searchInput');
+        const keyboard = document.getElementById('customKeyboard');
+        const kbPage0 = document.getElementById('kbPage0');
+        const kbPage1 = document.getElementById('kbPage1');
+        const kbPage2 = document.getElementById('kbPage2');
+
+        let currentPage = 0;
+        let isCaps = false;
+
+        document.getElementById('searchOpenBtn').addEventListener('click', function() {
+            searchOverlay.style.display = 'flex'; searchInput.value = ''; searchInput.focus();
+            setTimeout(function() { keyboard.classList.add('active'); }, 10);
+        });
+
+        document.getElementById('searchCloseBtn').addEventListener('click', function() {
+            keyboard.classList.remove('active');
+            setTimeout(function() { searchOverlay.style.display = 'none'; }, 200);
+        });
+
+        function switchKeyboardPage(pageIndex) {
+            kbPage0.classList.add('hidden');
+            kbPage1.classList.add('hidden');
+            kbPage2.classList.add('hidden');
+            
+            if (pageIndex === 0) kbPage0.classList.remove('hidden');
+            else if (pageIndex === 1) kbPage1.classList.remove('hidden');
+            else if (pageIndex === 2) kbPage2.classList.remove('hidden');
+            currentPage = pageIndex;
+        }
+
+        function updateCapsState() {
+            const allKeys = document.querySelectorAll('.kb-key[data-value]');
+            allKeys.forEach(key => {
+                if (isCaps) key.classList.add('caps-active');
+                else key.classList.remove('caps-active');
             });
+        }
 
-            handle.addEventListener('touchstart', (e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                const touch = e.touches[0];
-                const dir = handle.dataset.dir;
-                const rect = lens.getBoundingClientRect();
-                resizeData = {
-                    dir: dir,
-                    startX: touch.clientX,
-                    startY: touch.clientY,
-                    startWidth: rect.width,
-                    startHeight: rect.height,
-                    startLeft: rect.left,
-                    startTop: rect.top
-                };
-                document.addEventListener('touchmove', onResizeTouch, { passive: false });
-                document.addEventListener('touchend', onResizeEnd);
-            }, { passive: false });
+        keyboard.addEventListener('click', function(e) {
+            const target = e.target.closest('.kb-key');
+            if (!target) return;
+
+            if (target.id === 'kbBackspace' || target.id === 'kbBackspaceEN' || target.id === 'kbBackspaceNUM') {
+                searchInput.value = searchInput.value.slice(0, -1);
+                searchInput.focus();
+                return;
+            }
+            if (target.id === 'kbSpace' || target.id === 'kbSpaceEN' || target.id === 'kbSpaceNUM') {
+                searchInput.value += ' ';
+                searchInput.focus();
+                return;
+            }
+            if (target.id === 'kbEnter' || target.id === 'kbEnterEN' || target.id === 'kbEnterNUM') {
+                alert('Поиск по запросу: "' + searchInput.value + '"');
+                return;
+            }
+            if (target.id === 'kbNums' || target.id === 'kbNumsEN') {
+                switchKeyboardPage(2);
+                return;
+            }
+            if (target.id === 'kbNumsBack' || target.id === 'kbBackNum') {
+                switchKeyboardPage(0);
+                return;
+            }
+            if (target.id === 'kbLangRU') {
+                switchKeyboardPage(1);
+                return;
+            }
+            if (target.id === 'kbLangEN') {
+                switchKeyboardPage(0);
+                return;
+            }
+            if (target.id === 'kbCapsRU' || target.id === 'kbCapsEN') {
+                isCaps = !isCaps;
+                updateCapsState();
+                return;
+            }
+
+            const val = target.getAttribute('data-value');
+            if (val) {
+                searchInput.value += isCaps ? val.toUpperCase() : val;
+                searchInput.focus();
+            }
         });
 
-        function onResize(e) {
-            if (!resizeData) return;
-            resizeElement(e.clientX - resizeData.startX, e.clientY - resizeData.startY);
-        }
-
-        function onResizeTouch(e) {
-            if (!resizeData) return;
-            const touch = e.touches[0];
-            resizeElement(touch.clientX - resizeData.startX, touch.clientY - resizeData.startY);
-            e.preventDefault();
-        }
-
-        function resizeElement(dx, dy) {
-            let newWidth = resizeData.startWidth;
-            let newHeight = resizeData.startHeight;
-            let newLeft = resizeData.startLeft;
-            let newTop = resizeData.startTop;
-            const minSize = 60;
-
-            const dir = resizeData.dir;
-            if (dir === 'br') {
-                newWidth = Math.max(minSize, resizeData.startWidth + dx);
-                newHeight = Math.max(minSize, resizeData.startHeight + dy);
-            } else if (dir === 'bl') {
-                newWidth = Math.max(minSize, resizeData.startWidth - dx);
-                newHeight = Math.max(minSize, resizeData.startHeight + dy);
-                newLeft = resizeData.startLeft + (resizeData.startWidth - newWidth);
-            } else if (dir === 'tr') {
-                newWidth = Math.max(minSize, resizeData.startWidth + dx);
-                newHeight = Math.max(minSize, resizeData.startHeight - dy);
-                newTop = resizeData.startTop + (resizeData.startHeight - newHeight);
-            } else if (dir === 'tl') {
-                newWidth = Math.max(minSize, resizeData.startWidth - dx);
-                newHeight = Math.max(minSize, resizeData.startHeight - dy);
-                newLeft = resizeData.startLeft + (resizeData.startWidth - newWidth);
-                newTop = resizeData.startTop + (resizeData.startHeight - newHeight);
-            }
-
-            newLeft = Math.max(0, newLeft);
-            newTop = Math.max(0, newTop);
-            if (newLeft + newWidth > window.innerWidth) {
-                newWidth = window.innerWidth - newLeft;
-            }
-            if (newTop + newHeight > window.innerHeight) {
-                newHeight = window.innerHeight - newTop;
-            }
-            newWidth = Math.max(minSize, newWidth);
-            newHeight = Math.max(minSize, newHeight);
-
-            lens.style.width = newWidth + 'px';
-            lens.style.height = newHeight + 'px';
-            lens.style.left = newLeft + 'px';
-            lens.style.top = newTop + 'px';
-
-            resizeData.startWidth = newWidth;
-            resizeData.startHeight = newHeight;
-            resizeData.startLeft = newLeft;
-            resizeData.startTop = newTop;
-        }
-
-        function onResizeEnd() {
-            resizeData = null;
-            document.removeEventListener('mousemove', onResize);
-            document.removeEventListener('mouseup', onResizeEnd);
-            document.removeEventListener('touchmove', onResizeTouch);
-            document.removeEventListener('touchend', onResizeEnd);
-        }
-
-        // Обновление при ресайзе окна
-        window.addEventListener('resize', () => {
-            const rect = lens.getBoundingClientRect();
-            lensWidth = rect.width;
-            lensHeight = rect.height;
-            centerLens();
-        });
-
-        lens.addEventListener('dragstart', (e) => e.preventDefault());
-    })();
-</script>
+        // Init
+        renderLibrary();
+        showDashboard();
+    </script>
 </body>
 </html>
