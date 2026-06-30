@@ -2,204 +2,109 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Kindle Boot Log Emulator</title>
+    <title>Font Inspector</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            background: #000;
-        }
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        canvas {
-            background: #000;
-            border: 2px solid #333;
-            border-radius: 4px;
-            padding: 20px;
+        * { margin: 0; padding: 0; background: #111; }
+        body { padding: 20px; }
+        canvas { 
+            border: 1px solid #333; 
             image-rendering: pixelated;
+            margin: 5px;
         }
+        .info {
+            color: #0f0;
+            font-family: monospace;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #333;
+        }
+        .legend {
+            color: #888;
+            font-family: monospace;
+            font-size: 12px;
+            display: grid;
+            grid-template-columns: repeat(16, 1fr);
+            gap: 2px;
+            max-width: 800px;
+            margin: 10px 0;
+        }
+        .legend span { text-align: center; padding: 2px; border: 1px solid #222; }
     </style>
 </head>
 <body>
-    <canvas id="log"></canvas>
+    <div class="info" id="info">Loading...</div>
+    <canvas id="fontPreview"></canvas>
+    <canvas id="charTest" width="960" height="300"></canvas>
 
     <script>
-        // =============================================
-        // 1. ЗАГРУЗКА КАРТИНКИ
-        // =============================================
         const fontImage = new Image();
         fontImage.src = '12x22.png';
 
-        // Параметры шрифта (из размера картинки)
         const CHAR_W = 12;
         const CHAR_H = 22;
-        const COLS_PER_ROW = 16; // 16 символов в ряду на картинке
-        const TOTAL_CHARS = 96;  // Всего символов (0x20 до 0x7F)
+        const COLS = 16;
 
-        // Размер терминала: 80 колонок x 30 строк
-        const TERM_COLS = 80;
-        const TERM_ROWS = 30;
+        // Все 95 печатных ASCII символов (0x20 - 0x7E)
+        const allChars = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~';
 
-        const canvas = document.getElementById('log');
-        canvas.width = TERM_COLS * CHAR_W;
-        canvas.height = TERM_ROWS * CHAR_H;
-        const ctx = canvas.getContext('2d');
-
-        // =============================================
-        // 2. ЛОГИ ДЛЯ ВЫВОДА
-        // =============================================
-        const logLines = [
-            '*****************************************',
-            '*         WELCOME TO KINDLE              *',
-            '*   Linux 3.0.35-lab126 #1 SMP PREEMPT  *',
-            '*   KINDLE REV: 10th Generation          *',
-            '*   SYSTEM: MAIN (User partition)        *',
-            '*   BATTERY: 98% (Charging)              *',
-            '*   STORAGE: 2.1 GB free of 3.2 GB       *',
-            '*****************************************',
-            '',
-            '[    0.000000] Booting Linux on physical CPU 0x0',
-            '[    0.000000] Linux version 3.0.35-lab126 (lab126@sw027) (gcc version 4.5.1)',
-            '[    0.000000] CPU: ARMv7 Processor [412fc09a] revision 10 (ARMv7)',
-            '[    0.000000] Memory: 512MB = 512MB total',
-            '[    0.390000] EXT3-fs (mmcblk0p1): mounted filesystem with writeback data mode',
-            '[    4.230000] EPDC: 1st update marker - pre-initialization flash',
-            '[    5.450000] input: framework_keypad as /devices/virtual/input/input0',
-            '[    6.520000] Battery: 4.172 Volts, 31 Degrees C, Charging',
-            '[    7.100000] wifi: firmware loaded successfully, link is UP',
-            '[    8.000000] *** System ready ***',
-            '',
-            'Kindle startup complete. Happy reading!',
-            '',
-            'login[1890]: root login on \'ttyS0\''
-        ];
-
-        // =============================================
-        // 3. ФУНКЦИЯ ОТРИСОВКИ СИМВОЛА
-        // =============================================
-        function drawChar(ctx, img, charCode, x, y, useBold) {
-            // ASCII код должен быть в диапазоне 0x20-0x7E
-            if (charCode < 0x20 || charCode > 0x7E) return;
-
-            // Индекс символа в таблице (начинается с 0 для пробела)
-            const index = charCode - 0x20;
-
-            // Определяем ряд: 0 = обычный (верхний), 1 = жирный (нижний)
-            const row = useBold ? 1 : 0;
-
-            // Определяем колонку: от 0 до 15
-            const col = index % COLS_PER_ROW;
-
-            // Координаты на картинке-шрифте
-            const sx = col * CHAR_W;
-            const sy = row * CHAR_H;
-
-            // Рисуем символ
-            ctx.drawImage(
-                img,
-                sx, sy, CHAR_W, CHAR_H,  // откуда вырезать
-                x, y, CHAR_W, CHAR_H     // куда вставить
-            );
-        }
-
-        // =============================================
-        // 4. ОСНОВНАЯ ФУНКЦИЯ ОТРИСОВКИ
-        // =============================================
-        function renderLog() {
-            // Очищаем холст (чёрный фон)
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Проходим по всем строкам лога
-            for (let row = 0; row < logLines.length && row < TERM_ROWS; row++) {
-                const line = logLines[row];
-                if (!line) continue;
-
-                // Проходим по символам в строке
-                for (let col = 0; col < line.length && col < TERM_COLS; col++) {
-                    const code = line.charCodeAt(col);
-
-                    // Проверяем, что символ есть в таблице (0x20-0x7E)
-                    if (code >= 0x20 && code <= 0x7E) {
-                        // ⚠️ ВАЖНО: определяем, использовать ли жирный шрифт
-                        // В Android Recovery почти все символы — жирные (нижний ряд)
-                        // Исключение: некоторые спецсимволы могут быть обычными
-                        // Для реализма: делаем все символы жирными, кроме пробела
-                        const bold = (code !== 0x20); // всё, кроме пробела — жирное
-
-                        drawChar(
-                            ctx,
-                            fontImage,
-                            code,
-                            col * CHAR_W,
-                            row * CHAR_H,
-                            bold
-                        );
-                    }
-                }
-            }
-        }
-
-        // =============================================
-        // 5. АНИМИРОВАННЫЙ ВАРИАНТ (ПОСТРОЧНЫЙ ВЫВОД)
-        // =============================================
-        let currentLine = 0;
-        const lineDelay = 200; // мс между строками
-
-        function renderNextLine() {
-            if (currentLine >= logLines.length) {
-                console.log('✅ Boot complete!');
-                return;
-            }
-
-            // Очищаем холст
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Рендерим все строки до текущей включительно
-            for (let row = 0; row <= currentLine && row < TERM_ROWS; row++) {
-                const line = logLines[row];
-                if (!line) continue;
-
-                for (let col = 0; col < line.length && col < TERM_COLS; col++) {
-                    const code = line.charCodeAt(col);
-                    if (code >= 0x20 && code <= 0x7E) {
-                        // Все символы, кроме пробела — жирные (нижний ряд)
-                        const bold = (code !== 0x20);
-                        drawChar(
-                            ctx,
-                            fontImage,
-                            code,
-                            col * CHAR_W,
-                            row * CHAR_H,
-                            bold
-                        );
-                    }
-                }
-            }
-
-            currentLine++;
-            setTimeout(renderNextLine, lineDelay);
-        }
-
-        // =============================================
-        // 6. ЗАПУСК
-        // =============================================
         fontImage.onload = function() {
-            console.log('✅ Font loaded! Size:', fontImage.width, 'x', fontImage.height);
-            // renderLog(); // Мгновенный вывод (раскомментируйте, если не нужна анимация)
-            renderNextLine(); // Построчный вывод с задержкой
+            document.getElementById('info').innerHTML = 
+                `✅ Font loaded: ${fontImage.width}×${fontImage.height}px<br>` +
+                `Expected: 1152×44px (96 chars × 12px = 1152, 2 rows × 22px = 44)<br>` +
+                `If size differs, we need to adjust!`;
+
+            // Показываем саму картинку
+            const preview = document.getElementById('fontPreview');
+            preview.width = fontImage.width;
+            preview.height = fontImage.height;
+            const pctx = preview.getContext('2d');
+            pctx.drawImage(fontImage, 0, 0);
+
+            // Пробуем вывести символы с их номерами
+            const canvas = document.getElementById('charTest');
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Выводим каждый символ с подписью
+            for (let i = 0; i < allChars.length; i++) {
+                const code = allChars.charCodeAt(i);
+                const col = i % COLS;
+                const row = Math.floor(i / COLS);
+
+                // Позиция на картинке-шрифте
+                const sx = col * CHAR_W;
+                const sy = row * CHAR_H;
+
+                // Позиция на тестовом холсте (4 ряда по 24 символа)
+                const tx = (i % 24) * 40;
+                const ty = Math.floor(i / 24) * 40;
+
+                // Рисуем символ (жирный ряд для наглядности)
+                ctx.drawImage(fontImage, sx, sy, CHAR_W, CHAR_H, tx + 4, ty + 4, CHAR_W, CHAR_H);
+
+                // Подписываем ASCII код
+                ctx.fillStyle = '#666';
+                ctx.font = '8px monospace';
+                ctx.fillText(code, tx + 6, ty + 32);
+
+                // Подписываем сам символ
+                ctx.fillStyle = '#0f0';
+                ctx.font = '8px monospace';
+                ctx.fillText(allChars[i], tx + 18, ty + 32);
+            }
+
+            // Анализируем: где лежит буква 'A'?
+            const aIndex = allChars.indexOf('A'); // должно быть 33
+            const aCol = aIndex % COLS;
+            const aRow = Math.floor(aIndex / COLS);
+            console.log(`=== DEBUG ===`);
+            console.log(`Letter 'A' is at index ${aIndex}, col ${aCol}, row ${aRow}`);
+            console.log(`Pixel coords on font: x=${aCol*CHAR_W}, y=${aRow*CHAR_H}`);
         };
 
         fontImage.onerror = function() {
-            console.error('❌ Failed to load 12x22.png!');
-            ctx.fillStyle = '#0f0';
-            ctx.font = '14px monospace';
-            ctx.fillText('ERROR: 12x22.png not found!', 10, 30);
+            document.getElementById('info').innerHTML = '❌ Cannot load 12x22.png!';
         };
     </script>
 </body>
