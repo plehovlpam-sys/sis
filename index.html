@@ -10,7 +10,7 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background: #ffffff;
+            background: #000000;
         }
         body {
             display: flex;
@@ -21,7 +21,7 @@
             position: relative;
             width: 100vw;
             height: 100vh;
-            background: #ffffff;
+            background: #000000;
             overflow: hidden;
             transition: background 0.05s ease;
         }
@@ -45,7 +45,7 @@
             height: auto;
         }
         .logo.big img {
-            max-width: 230px;
+            max-width: 160px;
         }
         #log {
             position: absolute;
@@ -73,15 +73,46 @@
         }
         .tux img {
             display: block;
-            width: 300px;  /* <--- РЕГУЛИРОВОЧНОЕ ЗНАЧЕНИЕ РАЗМЕРА TUX */
+            width: 64px;
             height: auto;
+        }
+        #videoContainer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 5;
+            pointer-events: none;
+            user-select: none;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #videoContainer.show {
+            opacity: 1;
+        }
+        #bootVideo {
+            display: block;
+            max-width: 120px;
+            height: auto;
+            pointer-events: none;
+        }
+        #videoContainer.big #bootVideo {
+            max-width: 160px;
         }
     </style>
 </head>
 <body>
 <div class="screen" id="screen">
     <div class="logo" id="logoContainer">
-        <img src="logokindle.png" alt="Kindle" id="logoImg">
+        <img src="vidboot_do_logov.png" alt="Kindle" id="logoImg">
+    </div>
+    <div id="videoContainer">
+        <video id="bootVideo" muted playsinline loop>
+            <source src="vidboot.mp4" type="video/mp4">
+        </video>
     </div>
     <div class="tux" id="tuxContainer">
         <img src="tux.png" alt="Tux">
@@ -163,7 +194,7 @@
         }
 
         if (foundIndex === -1) {
-            ctx.fillStyle = '#ccc';
+            ctx.fillStyle = '#333';
             ctx.fillRect(x, y, CHAR_W, CHAR_H);
             return;
         }
@@ -216,6 +247,8 @@
     const logoContainer = document.getElementById('logoContainer');
     const logoImg = document.getElementById('logoImg');
     const tuxContainer = document.getElementById('tuxContainer');
+    const videoContainer = document.getElementById('videoContainer');
+    const bootVideo = document.getElementById('bootVideo');
 
     canvas.width = TERM_COLS * CHAR_W;
     canvas.height = TERM_ROWS * CHAR_H;
@@ -259,7 +292,7 @@
                     if (step === 0) {
                         screen.style.background = targetColor;
                     } else if (step === 1) {
-                        screen.style.background = `linear-gradient(to right, ${targetColor} 50%, #ffffff 50%)`;
+                        screen.style.background = `linear-gradient(to right, ${targetColor} 50%, #000000 50%)`;
                     } else if (step === 2) {
                         screen.style.background = targetColor;
                     }
@@ -316,17 +349,19 @@
         bootSequenceRunning = true;
         isBootComplete = false;
 
-        // --- ШАГ 1: Белый фон, ничего нет, ждём 2.5 секунды ---
-        screen.style.background = '#ffffff';
+        // --- ШАГ 1: Чёрный фон, ничего нет, ждём 2.5 секунды ---
+        screen.style.background = '#000000';
         canvas.style.opacity = '1';
         logoContainer.classList.remove('show');
         logoContainer.classList.remove('big');
+        videoContainer.classList.remove('show');
+        videoContainer.classList.remove('big');
         tuxContainer.classList.remove('show');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
         await new Promise(resolve => setTimeout(resolve, 2500));
 
-        // --- ШАГ 2: Быстрая смена на чёрный фон ---
+        // --- ШАГ 2: Быстрая смена на чёрный фон (уже чёрный) ---
         await flickerBackground('#000000', 3, 30);
 
         // --- ШАГ 3: Показываем логотип biosimitation.png ---
@@ -339,8 +374,8 @@
         // --- ШАГ 5: Ждём 3 секунды ---
         await new Promise(resolve => setTimeout(resolve, 3000));
 
-        // --- ШАГ 6: Быстрая смена на белый фон ---
-        await flickerBackground('#ffffff', 3, 30);
+        // --- ШАГ 6: Быстрая смена на чёрный фон ---
+        await flickerBackground('#000000', 3, 30);
 
         // --- ШАГ 7: Меняем лого на biosimitationpt2.png и показываем Tux ---
         logoImg.src = 'biosimitationpt2.png';
@@ -350,9 +385,9 @@
         // --- ШАГ 8: Ждём 1 секунду ---
         await new Promise(resolve => setTimeout(resolve, 1000));
 
-        // --- ШАГ 9: Убираем Tux и pt2, меняем на Kindle лого ---
+        // --- ШАГ 9: Убираем Tux и pt2, показываем vidboot_do_logov.png ---
         tuxContainer.classList.remove('show');
-        logoImg.src = 'logokindle.png';
+        logoImg.src = 'vidboot_do_logov.png';
         logoContainer.classList.add('show');
         
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -369,16 +404,19 @@
             }, 100);
         });
 
-        // --- ШАГ 11: Мгновенно убираем логи ---
+        // --- ШАГ 11: Мгновенно убираем логи и лого ---
         canvas.style.opacity = '0';
-        
-        // --- ШАГ 12: Увеличиваем логотип (мгновенно, без анимации) ---
-        logoContainer.classList.add('big');
+        logoContainer.classList.remove('show');
+
+        // --- ШАГ 12: Показываем видео vidboot.mp4 ---
+        videoContainer.classList.add('show');
+        bootVideo.currentTime = 0;
+        bootVideo.play();
 
         // --- ШАГ 13: Чёрное моргание (0.01s) ---
         screen.style.background = '#000000';
         await new Promise(resolve => setTimeout(resolve, 10));
-        screen.style.background = '#ffffff';
+        screen.style.background = '#000000';
         
         bootSequenceRunning = false;
     }
@@ -399,7 +437,7 @@
 
     fontImage.onerror = function() {
         console.error('❌ 12x22.png не найден!');
-        ctx.fillStyle = '#000';
+        ctx.fillStyle = '#0f0';
         ctx.font = '14px monospace';
         ctx.fillText('ERROR: 12x22.png not found!', 10, 30);
     };
@@ -413,6 +451,10 @@
     // ============================================================
     document.addEventListener('click', function() {
         if (!bootSequenceRunning) {
+            // Останавливаем видео если оно играет
+            bootVideo.pause();
+            bootVideo.currentTime = 0;
+            videoContainer.classList.remove('show');
             startBootSequence();
         }
     });
