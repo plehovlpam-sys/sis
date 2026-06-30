@@ -23,7 +23,7 @@
             height: 100vh;
             background: #ffffff;
             overflow: hidden;
-            transition: background 0.15s ease;
+            transition: background 0.05s ease;
         }
         .logo {
             position: absolute;
@@ -34,7 +34,7 @@
             pointer-events: none;
             user-select: none;
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.15s ease;
         }
         .logo.show {
             opacity: 1;
@@ -54,7 +54,7 @@
             z-index: 10;
             pointer-events: none;
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.15s ease;
         }
         #log.show {
             opacity: 1;
@@ -64,7 +64,7 @@
 <body>
 <div class="screen" id="screen">
     <div class="logo" id="logoContainer">
-        <img src="biosimitation.png" alt="BIOS" id="logoImg">
+        <img src="logokindle.png" alt="Kindle" id="logoImg">
     </div>
     <canvas id="log"></canvas>
 </div>
@@ -112,7 +112,7 @@
     ];
 
     // Сообщение для Recovery
-    const recoveryMessage = 'If you want to start recovery boot sector press volume + three times!!! Do not press anything to normal boot';
+    const recoveryMessage = 'If you want to start recovery boot sector press volume + three times!!';
 
     // ============================================================
     // 3. ПОСТРОЕНИЕ КАРТЫ СИМВОЛОВ
@@ -194,6 +194,7 @@
     const ctx = canvas.getContext('2d');
     const screen = document.getElementById('screen');
     const logoContainer = document.getElementById('logoContainer');
+    const logoImg = document.getElementById('logoImg');
 
     canvas.width = TERM_COLS * CHAR_W;
     canvas.height = TERM_ROWS * CHAR_H;
@@ -226,21 +227,18 @@
     }
 
     // ============================================================
-    // 8. СМЕНА ФОНА С "ДЁРГАНЬЕМ"
+    // 8. СМЕНА ФОНА (БЫСТРАЯ)
     // ============================================================
-    function flickerBackground(targetColor, steps = 2, delay = 100) {
+    function flickerBackground(targetColor, steps = 2, delay = 30) {
         return new Promise((resolve) => {
             let step = 0;
-            const currentColor = screen.style.background || '#ffffff';
             
             function doStep() {
                 if (step < steps) {
-                    // Дёрганое переключение: сначала одна половина, потом вторая
                     if (step === 0) {
                         screen.style.background = targetColor;
                     } else if (step === 1) {
-                        // Добавляем эффект "половинчатого" обновления через градиент
-                        screen.style.background = `linear-gradient(to right, ${targetColor} 50%, ${currentColor} 50%)`;
+                        screen.style.background = `linear-gradient(to right, ${targetColor} 50%, #ffffff 50%)`;
                     } else if (step === 2) {
                         screen.style.background = targetColor;
                     }
@@ -290,7 +288,13 @@
     // ============================================================
     // 10. ОСНОВНАЯ ЛОГИКА ЗАГРУЗКИ
     // ============================================================
+    let bootSequenceRunning = false;
+
     async function startBootSequence() {
+        if (bootSequenceRunning) return;
+        bootSequenceRunning = true;
+        isBootComplete = false;
+
         // --- ШАГ 1: Белый фон, ничего нет, ждём 2.5 секунды ---
         screen.style.background = '#ffffff';
         canvas.classList.remove('show');
@@ -299,36 +303,52 @@
         
         await new Promise(resolve => setTimeout(resolve, 2500));
 
-        // --- ШАГ 2: Дёрганая смена на чёрный фон (эффект BIOS) ---
-        await flickerBackground('#000000', 3, 100);
+        // --- ШАГ 2: Быстрая смена на чёрный фон ---
+        await flickerBackground('#000000', 3, 30);
 
         // --- ШАГ 3: Показываем логотип biosimitation.png ---
+        logoImg.src = 'biosimitation.png';
         logoContainer.classList.add('show');
-        // Переключаем изображение на biosimitation.png
-        document.getElementById('logoImg').src = 'biosimitation.png';
 
         // --- ШАГ 4: Выводим сообщение Recovery ---
         canvas.classList.add('show');
-        renderTextOnCanvas(recoveryMessage, 10); // выводим с 10-й строки
+        renderTextOnCanvas(recoveryMessage, 10);
 
         // --- ШАГ 5: Ждём 3 секунды ---
         await new Promise(resolve => setTimeout(resolve, 3000));
 
-        // --- ШАГ 6: Дёрганая смена обратно на белый фон ---
-        await flickerBackground('#ffffff', 3, 100);
+        // --- ШАГ 6: Быстрая смена на белый фон ---
+        await flickerBackground('#ffffff', 3, 30);
 
-        // --- ШАГ 7: Ждём 0.8 секунды ---
-        await new Promise(resolve => setTimeout(resolve, 800));
+        // --- ШАГ 7: Меняем лого на biosimitationpt2.png ---
+        logoImg.src = 'biosimitationpt2.png';
+        logoContainer.classList.add('show');
 
-        // --- ШАГ 8: Меняем лого на Kindle и запускаем логи ---
-        document.getElementById('logoImg').src = 'logokindle.png';
+        // --- ШАГ 8: Ждём 1 секунду ---
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // --- ШАГ 9: Смена на Kindle лого и запуск логов ---
+        logoImg.src = 'logokindle.png';
         logoContainer.classList.add('show');
         
-        // Очищаем канвас и запускаем логи
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         currentLine = 0;
-        isBootComplete = false;
         renderNextLine();
+
+        // --- ШАГ 10: Ждём 4 секунды после завершения логов ---
+        await new Promise(resolve => {
+            const checkComplete = setInterval(() => {
+                if (isBootComplete) {
+                    clearInterval(checkComplete);
+                    resolve();
+                }
+            }, 100);
+        });
+
+        // --- ШАГ 11: Убираем логи, оставляем только лого Kindle ---
+        canvas.classList.remove('show');
+        logoContainer.classList.add('show');
+        bootSequenceRunning = false;
     }
 
     // ============================================================
@@ -360,10 +380,7 @@
     // 12. ПЕРЕЗАПУСК ПО КЛИКУ
     // ============================================================
     document.addEventListener('click', function() {
-        if (isBootComplete) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            currentLine = 0;
-            isBootComplete = false;
+        if (!bootSequenceRunning) {
             startBootSequence();
         }
     });
