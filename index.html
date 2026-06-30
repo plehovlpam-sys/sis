@@ -112,15 +112,18 @@
         .final-load {
             position: absolute;
             top: calc(15% + 80px);
-            left: 0;
-            width: 100%;
+            left: 50%;
+            transform: translateX(-50%);
             text-align: center;
+            width: 90%;
+            max-width: 600px;
         }
         .final-load img {
             display: block;
-            max-width: 90%;
+            width: 100%;
             height: auto;
             margin: 0 auto;
+            border-radius: 200px;
         }
 
         .final-downthere {
@@ -385,7 +388,6 @@
     // ============================================================
     // 10. АНИМАЦИЯ LOAD (ФИКСИРОВАННАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ)
     // ============================================================
-    // load1: 8 сек, load2: 4 сек, load3: 5 сек, load4: 3 сек, load5: 5 сек, load6: 10 сек, load7: 5 сек
     const loadSequence = [
         { file: 'load1.png', duration: 8000 },
         { file: 'load2.png', duration: 4000 },
@@ -410,7 +412,6 @@
 
     function showNextLoad() {
         if (loadIndex >= loadSequence.length) {
-            // Все load показаны, завершаем
             if (loadResolve) {
                 loadResolve();
                 loadResolve = null;
@@ -422,7 +423,6 @@
         loadImg.src = item.file;
         loadIndex++;
 
-        // Запускаем таймер на длительность текущего load
         loadTimeout = setTimeout(() => {
             showNextLoad();
         }, item.duration);
