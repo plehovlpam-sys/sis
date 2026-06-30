@@ -112,27 +112,27 @@
         .final-load {
             position: absolute;
             top: calc(15% + 80px);
-            left: 50%;
-            transform: translateX(-50%);
+            left: 0;
+            width: 100%;
             text-align: center;
         }
         .final-load img {
             display: block;
-            max-width: 120px;
+            max-width: 90%;
             height: auto;
             margin: 0 auto;
         }
 
         .final-downthere {
             position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            bottom: 0;
+            left: 0;
+            width: 100%;
             text-align: center;
         }
         .final-downthere img {
             display: block;
-            max-width: 150px;
+            width: 100%;
             height: auto;
             margin: 0 auto;
         }
@@ -383,42 +383,66 @@
     }
 
     // ============================================================
-    // 10. АНИМАЦИЯ LOAD (СЛУЧАЙНАЯ СМЕНА)
+    // 10. АНИМАЦИЯ LOAD (ФИКСИРОВАННАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ)
     // ============================================================
-    let loadInterval = null;
+    // load1: 8 сек, load2: 4 сек, load3: 5 сек, load4: 3 сек, load5: 5 сек, load6: 10 сек, load7: 5 сек
+    const loadSequence = [
+        { file: 'load1.png', duration: 8000 },
+        { file: 'load2.png', duration: 4000 },
+        { file: 'load3.png', duration: 5000 },
+        { file: 'load4.png', duration: 3000 },
+        { file: 'load5.png', duration: 5000 },
+        { file: 'load6.png', duration: 10000 },
+        { file: 'load7.png', duration: 5000 }
+    ];
+
+    let loadIndex = 0;
+    let loadTimeout = null;
+    let loadResolve = null;
 
     function startLoadAnimation() {
-        // Функция смены изображения
-        function changeLoadImage() {
-            const randomNum = Math.floor(Math.random() * 7) + 1; // 1-7
-            loadImg.src = `load${randomNum}.png`;
+        loadIndex = 0;
+        return new Promise((resolve) => {
+            loadResolve = resolve;
+            showNextLoad();
+        });
+    }
+
+    function showNextLoad() {
+        if (loadIndex >= loadSequence.length) {
+            // Все load показаны, завершаем
+            if (loadResolve) {
+                loadResolve();
+                loadResolve = null;
+            }
+            return;
         }
 
-        // Меняем сразу
-        changeLoadImage();
+        const item = loadSequence[loadIndex];
+        loadImg.src = item.file;
+        loadIndex++;
 
-        // Запускаем интервал со случайной задержкой 1-5 секунд
-        function scheduleNext() {
-            const delay = (Math.random() * 4000) + 1000; // 1-5 секунд в мс
-            loadInterval = setTimeout(() => {
-                changeLoadImage();
-                scheduleNext();
-            }, delay);
-        }
-        scheduleNext();
+        // Запускаем таймер на длительность текущего load
+        loadTimeout = setTimeout(() => {
+            showNextLoad();
+        }, item.duration);
     }
 
     function stopLoadAnimation() {
-        if (loadInterval) {
-            clearTimeout(loadInterval);
-            loadInterval = null;
+        if (loadTimeout) {
+            clearTimeout(loadTimeout);
+            loadTimeout = null;
+        }
+        if (loadResolve) {
+            loadResolve();
+            loadResolve = null;
         }
     }
 
     // ============================================================
     // 11. ПОКАЗ ФИНАЛЬНОГО ЭКРАНА
     // ============================================================
-    function showFinalScreen() {
+    async function showFinalScreen() {
         // Скрываем всё лишнее
         logoContainer.classList.remove('show');
         logoContainer.classList.remove('big');
@@ -428,8 +452,16 @@
         // Показываем финальный экран
         finalScreen.classList.add('show');
         
-        // Запускаем анимацию load
-        startLoadAnimation();
+        // Запускаем анимацию load и ждём её завершения
+        await startLoadAnimation();
+
+        // --- После завершения всех load: чёрное моргание и всё исчезает ---
+        screen.style.background = '#000000';
+        await new Promise(resolve => setTimeout(resolve, 300));
+        finalScreen.classList.remove('show');
+        screen.style.background = '#ffffff';
+        
+        console.log('✅ Final screen complete - all done!');
     }
 
     // ============================================================
@@ -500,7 +532,7 @@
         });
 
         // --- ШАГ 11: Показываем финальный экран ---
-        showFinalScreen();
+        await showFinalScreen();
         
         bootSequenceRunning = false;
     }
