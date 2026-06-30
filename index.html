@@ -43,7 +43,6 @@
             display: block;
             max-width: 120px;
             height: auto;
-            transition: all 0.3s ease;
         }
         .logo.big img {
             max-width: 160px;
@@ -59,12 +58,33 @@
             pointer-events: none;
             opacity: 1;
         }
+        .tux {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 15;
+            pointer-events: none;
+            user-select: none;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+        .tux.show {
+            opacity: 1;
+        }
+        .tux img {
+            display: block;
+            max-width: 48px;
+            height: auto;
+        }
     </style>
 </head>
 <body>
 <div class="screen" id="screen">
     <div class="logo" id="logoContainer">
         <img src="logokindle.png" alt="Kindle" id="logoImg">
+    </div>
+    <div class="tux" id="tuxContainer">
+        <img src="tux.png" alt="Tux">
     </div>
     <canvas id="log"></canvas>
 </div>
@@ -195,6 +215,7 @@
     const screen = document.getElementById('screen');
     const logoContainer = document.getElementById('logoContainer');
     const logoImg = document.getElementById('logoImg');
+    const tuxContainer = document.getElementById('tuxContainer');
 
     canvas.width = TERM_COLS * CHAR_W;
     canvas.height = TERM_ROWS * CHAR_H;
@@ -300,6 +321,7 @@
         canvas.style.opacity = '1';
         logoContainer.classList.remove('show');
         logoContainer.classList.remove('big');
+        tuxContainer.classList.remove('show');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
         await new Promise(resolve => setTimeout(resolve, 2500));
@@ -320,14 +342,16 @@
         // --- ШАГ 6: Быстрая смена на белый фон ---
         await flickerBackground('#ffffff', 3, 30);
 
-        // --- ШАГ 7: Меняем лого на biosimitationpt2.png ---
+        // --- ШАГ 7: Меняем лого на biosimitationpt2.png и показываем Tux ---
         logoImg.src = 'biosimitationpt2.png';
         logoContainer.classList.add('show');
+        tuxContainer.classList.add('show');
 
         // --- ШАГ 8: Ждём 1 секунду ---
         await new Promise(resolve => setTimeout(resolve, 1000));
 
-        // --- ШАГ 9: Смена на Kindle лого и запуск логов ---
+        // --- ШАГ 9: Убираем Tux и pt2, меняем на Kindle лого ---
+        tuxContainer.classList.remove('show');
         logoImg.src = 'logokindle.png';
         logoContainer.classList.add('show');
         
@@ -345,10 +369,10 @@
             }, 100);
         });
 
-        // --- ШАГ 11: Мгновенно убираем логи (без fade out) ---
+        // --- ШАГ 11: Мгновенно убираем логи ---
         canvas.style.opacity = '0';
         
-        // --- ШАГ 12: Увеличиваем логотип ---
+        // --- ШАГ 12: Увеличиваем логотип (мгновенно, без анимации) ---
         logoContainer.classList.add('big');
 
         // --- ШАГ 13: Чёрное моргание (0.01s) ---
