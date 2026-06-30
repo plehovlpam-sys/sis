@@ -72,7 +72,7 @@
     let charMap = {};
 
     // ============================================================
-    // 2. ЛОГИ
+    // 2. ЛОГИ (обрезаем до 50 строк для теста, чтобы проверить)
     // ============================================================
     const logLines = [
         'U-Boot 2016.03 (Feb 19 2020 - 18:42:36 +0000)',
@@ -440,7 +440,6 @@
         const scaleY = screenHeight / canvasHeight;
         const scale = Math.min(scaleX, scaleY);
         
-        // Применяем масштаб от левого верхнего угла
         canvas.style.transform = `scale(${scale})`;
         canvas.style.transformOrigin = '0 0';
         canvas.style.left = '0px';
@@ -449,22 +448,19 @@
     }
 
     // ============================================================
-    // 7. ПОСТРОЧНЫЙ ВЫВОД
+    // 7. ПОСТРОЧНЫЙ ВЫВОД (С ОТЛАДКОЙ)
     // ============================================================
     let currentLine = 0;
-    let isRendering = false;
     const lineDelay = 30;
 
     function renderNextLine() {
-        if (isRendering) return;
         if (currentLine >= logLines.length) {
-            console.log('✅ Boot complete!');
-            isRendering = false;
+            console.log('✅ Boot complete! Все ' + logLines.length + ' строк выведено');
             return;
         }
 
-        isRendering = true;
         const line = logLines[currentLine];
+        console.log(`📝 Строка ${currentLine + 1}/${logLines.length}: "${line.substring(0, 30)}..."`);
         
         if (line) {
             for (let col = 0; col < line.length && col < TERM_COLS; col++) {
@@ -476,7 +472,6 @@
         }
         
         currentLine++;
-        isRendering = false;
 
         if (currentLine < logLines.length) {
             setTimeout(renderNextLine, lineDelay);
@@ -491,7 +486,7 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         fitCanvas();
         currentLine = 0;
-        isRendering = false;
+        console.log('🚀 Запуск загрузки Kindle...');
         renderNextLine();
     }
 
@@ -518,7 +513,6 @@
         if (currentLine >= logLines.length) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             currentLine = 0;
-            isRendering = false;
             renderNextLine();
         }
     });
