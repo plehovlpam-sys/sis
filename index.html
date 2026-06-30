@@ -139,6 +139,51 @@
             height: auto;
             margin: 0 auto;
         }
+
+        /* ===== ТЕКСТ "ПОДГОТОВКА KINDLE..." ===== */
+        .preparing-text {
+            position: absolute;
+            top: calc(15% + 80px + 100px);
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 25;
+            font-family: 'standart', 'Arial', sans-serif;
+            font-size: 24px;
+            color: #000000;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            user-select: none;
+            white-space: nowrap;
+        }
+        .preparing-text.show {
+            opacity: 1;
+        }
+
+        /* ===== БЫСТРЫЙ LOAD (маленький под текстом) ===== */
+        .quick-load {
+            position: absolute;
+            top: calc(15% + 80px + 100px + 40px);
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 25;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            user-select: none;
+        }
+        .quick-load.show {
+            opacity: 1;
+        }
+        .quick-load img {
+            display: block;
+            max-width: 80px;
+            height: auto;
+            margin: 0 auto;
+            border-radius: 100px;
+        }
     </style>
 </head>
 <body>
@@ -163,6 +208,14 @@
         <div class="final-downthere">
             <img src="downthere.jpeg" alt="Down There">
         </div>
+    </div>
+
+    <!-- Текст "Подготовка Kindle..." -->
+    <div class="preparing-text" id="preparingText">Подготовка Kindle...</div>
+
+    <!-- Быстрый load (маленький) -->
+    <div class="quick-load" id="quickLoad">
+        <img src="load1.png" alt="Loading" id="quickLoadImg">
     </div>
 </div>
 
@@ -295,6 +348,9 @@
     const tuxContainer = document.getElementById('tuxContainer');
     const finalScreen = document.getElementById('finalScreen');
     const loadImg = document.getElementById('loadImg');
+    const preparingText = document.getElementById('preparingText');
+    const quickLoad = document.getElementById('quickLoad');
+    const quickLoadImg = document.getElementById('quickLoadImg');
 
     canvas.width = TERM_COLS * CHAR_W;
     canvas.height = TERM_ROWS * CHAR_H;
@@ -386,61 +442,34 @@
     }
 
     // ============================================================
-    // 10. АНИМАЦИЯ LOAD (ФИКСИРОВАННАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ)
+    // 10. БЫСТРАЯ АНИМАЦИЯ LOAD (1-7 за 7 секунд)
     // ============================================================
-    const loadSequence = [
-        { file: 'load1.png', duration: 8000 },
-        { file: 'load2.png', duration: 4000 },
-        { file: 'load3.png', duration: 5000 },
-        { file: 'load4.png', duration: 3000 },
-        { file: 'load5.png', duration: 5000 },
-        { file: 'load6.png', duration: 10000 },
-        { file: 'load7.png', duration: 5000 }
+    const quickLoadSequence = [
+        'load1.png', 'load2.png', 'load3.png', 'load4.png',
+        'load5.png', 'load6.png', 'load7.png'
     ];
+    const QUICK_LOAD_DURATION = 1000; // 1 секунда на каждый = 7 секунд всего
 
-    let loadIndex = 0;
-    let loadTimeout = null;
-    let loadResolve = null;
-
-    function startLoadAnimation() {
-        loadIndex = 0;
+    function startQuickLoad() {
         return new Promise((resolve) => {
-            loadResolve = resolve;
-            showNextLoad();
+            let index = 0;
+            
+            function showNext() {
+                if (index >= quickLoadSequence.length) {
+                    resolve();
+                    return;
+                }
+                quickLoadImg.src = quickLoadSequence[index];
+                index++;
+                setTimeout(showNext, QUICK_LOAD_DURATION);
+            }
+            
+            showNext();
         });
     }
 
-    function showNextLoad() {
-        if (loadIndex >= loadSequence.length) {
-            if (loadResolve) {
-                loadResolve();
-                loadResolve = null;
-            }
-            return;
-        }
-
-        const item = loadSequence[loadIndex];
-        loadImg.src = item.file;
-        loadIndex++;
-
-        loadTimeout = setTimeout(() => {
-            showNextLoad();
-        }, item.duration);
-    }
-
-    function stopLoadAnimation() {
-        if (loadTimeout) {
-            clearTimeout(loadTimeout);
-            loadTimeout = null;
-        }
-        if (loadResolve) {
-            loadResolve();
-            loadResolve = null;
-        }
-    }
-
     // ============================================================
-    // 11. ПОКАЗ ФИНАЛЬНОГО ЭКРАНА
+    // 11. ПОКАЗ ФИНАЛЬНОГО ЭКРАНА С ПОДГОТОВКОЙ
     // ============================================================
     async function showFinalScreen() {
         // Скрываем всё лишнее
@@ -452,20 +481,76 @@
         // Показываем финальный экран
         finalScreen.classList.add('show');
         
-        // Запускаем анимацию load и ждём её завершения
-        await startLoadAnimation();
-
-        // --- После завершения всех load: чёрное моргание и всё исчезает ---
-        screen.style.background = '#000000';
-        await new Promise(resolve => setTimeout(resolve, 300));
-        finalScreen.classList.remove('show');
-        screen.style.background = '#ffffff';
+        // Ждём 0.5 секунды и показываем текст "Подготовка Kindle..."
+        await new Promise(resolve => setTimeout(resolve, 500));
+        preparingText.classList.add('show');
         
-        console.log('✅ Final screen complete - all done!');
+        // Ещё 0.3 секунды и показываем быстрый load
+        await new Promise(resolve => setTimeout(resolve, 300));
+        quickLoad.classList.add('show');
+        
+        // Запускаем быстрый load (1-7 за 7 секунд)
+        await startQuickLoad();
+        
+        // Ждём 3 секунды
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        // Fade out всего экрана
+        finalScreen.style.transition = 'opacity 0.5s ease';
+        finalScreen.classList.remove('show');
+        preparingText.classList.remove('show');
+        quickLoad.classList.remove('show');
+        
+        // Ждём завершения fade out
+        await new Promise(resolve => setTimeout(resolve, 600));
+        
+        // Редирект на setupwizard.html без адресной строки
+        redirectToSetup();
     }
 
     // ============================================================
-    // 12. ОСНОВНАЯ ЛОГИКА ЗАГРУЗКИ
+    // 12. РЕДИРЕКТ БЕЗ АДРЕСНОЙ СТРОКИ
+    // ============================================================
+    function redirectToSetup() {
+        // Способ 1: Использовать History API + замену страницы
+        // Это позволяет сохранить PWA-вид без адресной строки
+        const targetUrl = '/setupwizard.html';
+        
+        // Пытаемся использовать history.pushState с заменой
+        try {
+            // Создаём новый объект истории
+            history.pushState(null, '', targetUrl);
+            
+            // Загружаем новую страницу через fetch и заменяем document
+            fetch(targetUrl)
+                .then(response => response.text())
+                .then(html => {
+                    // Заменяем весь документ новым HTML
+                    document.documentElement.innerHTML = html;
+                    // Перезапускаем скрипты на новой странице
+                    const scripts = document.querySelectorAll('script');
+                    scripts.forEach(script => {
+                        const newScript = document.createElement('script');
+                        if (script.src) {
+                            newScript.src = script.src;
+                        } else {
+                            newScript.textContent = script.textContent;
+                        }
+                        document.head.appendChild(newScript);
+                    });
+                })
+                .catch(() => {
+                    // Если fetch не сработал, используем location.replace
+                    location.replace(targetUrl);
+                });
+        } catch (e) {
+            // Fallback: обычный переход
+            location.replace(targetUrl);
+        }
+    }
+
+    // ============================================================
+    // 13. ОСНОВНАЯ ЛОГИКА ЗАГРУЗКИ
     // ============================================================
     let bootSequenceRunning = false;
 
@@ -476,7 +561,8 @@
 
         // Скрываем финальный экран
         finalScreen.classList.remove('show');
-        stopLoadAnimation();
+        preparingText.classList.remove('show');
+        quickLoad.classList.remove('show');
 
         // --- ШАГ 1: Белый фон, ничего нет, ждём 2.5 секунды ---
         screen.style.background = '#ffffff';
@@ -531,14 +617,14 @@
             }, 100);
         });
 
-        // --- ШАГ 11: Показываем финальный экран ---
+        // --- ШАГ 11: Показываем финальный экран с подготовкой ---
         await showFinalScreen();
         
         bootSequenceRunning = false;
     }
 
     // ============================================================
-    // 13. ЗАПУСК
+    // 14. ЗАПУСК
     // ============================================================
     function start() {
         buildCharMap();
@@ -563,7 +649,7 @@
     }
 
     // ============================================================
-    // 14. ПЕРЕЗАПУСК ПО КЛИКУ
+    // 15. ПЕРЕЗАПУСК ПО КЛИКУ
     // ============================================================
     document.addEventListener('click', function() {
         if (!bootSequenceRunning) {
@@ -572,7 +658,7 @@
     });
 
     // ============================================================
-    // 15. ПЕРЕСЧЁТ МАСШТАБА
+    // 16. ПЕРЕСЧЁТ МАСШТАБА
     // ============================================================
     window.addEventListener('resize', fitCanvas);
     window.addEventListener('orientationchange', function() {
