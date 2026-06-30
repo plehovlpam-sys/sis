@@ -2,39 +2,49 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Font Inspector</title>
+    <title>Font Grid Viewer</title>
     <style>
-        * { margin: 0; padding: 0; background: #111; }
-        body { padding: 20px; }
-        canvas { 
-            border: 1px solid #333; 
-            image-rendering: pixelated;
-            margin: 5px;
-        }
-        .info {
+        * { margin: 0; padding: 0; background: #000; }
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
             color: #0f0;
             font-family: monospace;
-            padding: 10px;
-            margin: 10px 0;
+        }
+        canvas {
             border: 1px solid #333;
+            image-rendering: pixelated;
+            margin: 10px;
         }
-        .legend {
-            color: #888;
-            font-family: monospace;
-            font-size: 12px;
+        .info {
+            padding: 10px;
+            border: 1px solid #333;
+            margin: 10px;
+            max-width: 900px;
+            background: #111;
+        }
+        .grid-info {
             display: grid;
-            grid-template-columns: repeat(16, 1fr);
+            grid-template-columns: repeat(16, 60px);
             gap: 2px;
-            max-width: 800px;
-            margin: 10px 0;
+            margin: 10px;
+            font-size: 10px;
         }
-        .legend span { text-align: center; padding: 2px; border: 1px solid #222; }
+        .grid-info .cell {
+            text-align: center;
+            padding: 2px;
+            border: 1px solid #222;
+            background: #111;
+        }
     </style>
 </head>
 <body>
-    <div class="info" id="info">Loading...</div>
-    <canvas id="fontPreview"></canvas>
-    <canvas id="charTest" width="960" height="300"></canvas>
+    <div class="info" id="info">Loading font...</div>
+    <canvas id="fontDisplay"></canvas>
+    <div id="legend"></div>
+    <canvas id="extractedChars" width="960" height="400"></canvas>
 
     <script>
         const fontImage = new Image();
@@ -44,67 +54,70 @@
         const CHAR_H = 22;
         const COLS = 16;
 
-        // Все 95 печатных ASCII символов (0x20 - 0x7E)
-        const allChars = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~';
-
         fontImage.onload = function() {
-            document.getElementById('info').innerHTML = 
-                `✅ Font loaded: ${fontImage.width}×${fontImage.height}px<br>` +
-                `Expected: 1152×44px (96 chars × 12px = 1152, 2 rows × 22px = 44)<br>` +
-                `If size differs, we need to adjust!`;
+            const info = document.getElementById('info');
+            info.innerHTML = `
+                <b>✅ Font loaded: ${fontImage.width}×${fontImage.height}px</b><br>
+                Ширина: ${fontImage.width}px (должно быть 1152 = 96×12)<br>
+                Высота: ${fontImage.height}px (должно быть 44 = 2×22)<br>
+                Всего символов: ${(fontImage.width / CHAR_W) * (fontImage.height / CHAR_H)}<br>
+                Строк на картинке: ${Math.floor(fontImage.height / CHAR_H)}<br>
+                Колонок на картинке: ${Math.floor(fontImage.width / CHAR_W)}
+            `;
 
-            // Показываем саму картинку
-            const preview = document.getElementById('fontPreview');
-            preview.width = fontImage.width;
-            preview.height = fontImage.height;
-            const pctx = preview.getContext('2d');
-            pctx.drawImage(fontImage, 0, 0);
+            // Показываем картинку
+            const displayCanvas = document.getElementById('fontDisplay');
+            displayCanvas.width = fontImage.width;
+            displayCanvas.height = fontImage.height;
+            const dctx = displayCanvas.getContext('2d');
+            dctx.drawImage(fontImage, 0, 0);
 
-            // Пробуем вывести символы с их номерами
-            const canvas = document.getElementById('charTest');
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Извлекаем все символы и показываем их с индексами
+            const extractCanvas = document.getElementById('extractedChars');
+            const ectx = extractCanvas.getContext('2d');
+            ectx.fillStyle = '#000';
+            ectx.fillRect(0, 0, extractCanvas.width, extractCanvas.height);
 
-            // Выводим каждый символ с подписью
-            for (let i = 0; i < allChars.length; i++) {
-                const code = allChars.charCodeAt(i);
-                const col = i % COLS;
-                const row = Math.floor(i / COLS);
+            const totalRows = Math.floor(fontImage.height / CHAR_H);
+            const totalCols = Math.floor(fontImage.width / CHAR_W);
 
-                // Позиция на картинке-шрифте
-                const sx = col * CHAR_W;
-                const sy = row * CHAR_H;
+            let legendHtml = '<div class="grid-info">';
+            let index = 0;
 
-                // Позиция на тестовом холсте (4 ряда по 24 символа)
-                const tx = (i % 24) * 40;
-                const ty = Math.floor(i / 24) * 40;
-
-                // Рисуем символ (жирный ряд для наглядности)
-                ctx.drawImage(fontImage, sx, sy, CHAR_W, CHAR_H, tx + 4, ty + 4, CHAR_W, CHAR_H);
-
-                // Подписываем ASCII код
-                ctx.fillStyle = '#666';
-                ctx.font = '8px monospace';
-                ctx.fillText(code, tx + 6, ty + 32);
-
-                // Подписываем сам символ
-                ctx.fillStyle = '#0f0';
-                ctx.font = '8px monospace';
-                ctx.fillText(allChars[i], tx + 18, ty + 32);
+            for (let row = 0; row < totalRows; row++) {
+                for (let col = 0; col < totalCols; col++) {
+                    const sx = col * CHAR_W;
+                    const sy = row * CHAR_H;
+                    
+                    // Выводим символ на холст
+                    const tx = col * 60 + 10;
+                    const ty = row * 80 + 10;
+                    ectx.drawImage(fontImage, sx, sy, CHAR_W, CHAR_H, tx, ty, CHAR_W, CHAR_H);
+                    
+                    // Подписываем номер
+                    ectx.fillStyle = '#666';
+                    ectx.font = '8px monospace';
+                    ectx.fillText(`#${index}`, tx + 14, ty + 32);
+                    
+                    legendHtml += `<div class="cell">#${index}</div>`;
+                    index++;
+                }
             }
+            legendHtml += '</div>';
+            document.getElementById('legend').innerHTML = legendHtml;
 
-            // Анализируем: где лежит буква 'A'?
-            const aIndex = allChars.indexOf('A'); // должно быть 33
-            const aCol = aIndex % COLS;
-            const aRow = Math.floor(aIndex / COLS);
-            console.log(`=== DEBUG ===`);
-            console.log(`Letter 'A' is at index ${aIndex}, col ${aCol}, row ${aRow}`);
-            console.log(`Pixel coords on font: x=${aCol*CHAR_W}, y=${aRow*CHAR_H}`);
+            // Дополнительная информация
+            console.log('=== ПОЗИЦИИ БУКВ ===');
+            console.log('Посчитайте от 0:');
+            console.log('Ряд 0 (верхний): индексы 0-15');
+            console.log('Ряд 1 (нижний): индексы 16-31');
+            console.log('И т.д.');
+            console.log('');
+            console.log('Введите вручную индекс буквы "A" (посчитайте по картинке)');
         };
 
         fontImage.onerror = function() {
-            document.getElementById('info').innerHTML = '❌ Cannot load 12x22.png!';
+            document.getElementById('info').innerHTML = '❌ Не удалось загрузить 12x22.png!';
         };
     </script>
 </body>
