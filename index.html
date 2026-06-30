@@ -1,46 +1,79 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Kindle Boot Log - Working Version</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kindle Bootstrap</title>
     <style>
-        * { margin: 0; padding: 0; background: #000; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
+            background: #d9d4cd;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
         }
-        canvas {
-            background: #000;
-            border: 2px solid #333;
-            border-radius: 4px;
-            padding: 20px;
+        .kindle-screen {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: #e8e4db;
+            overflow: hidden;
+        }
+        .logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 5;
+            pointer-events: none;
+            user-select: none;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+        .logo img {
+            display: block;
+            max-width: 180px;
+            height: auto;
+        }
+        .logo.hidden {
+            opacity: 0;
+        }
+        #logCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: transparent;
             image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            pointer-events: none;
+            z-index: 10;
         }
     </style>
 </head>
 <body>
-    <canvas id="log"></canvas>
+<div class="kindle-screen" id="screen">
+    <div class="logo" id="logoContainer">
+        <img src="logokindle.png" alt="Kindle" id="logoImg">
+    </div>
+    <canvas id="logCanvas"></canvas>
+</div>
 
-    <script>
-        // ============================================================
-        // 1. ЗАГРУЖАЕМ КАРТИНКУ
-        // ============================================================
-        const fontImage = new Image();
-        fontImage.src = '12x22.png';
-
+<script>
+    (function() {
         const CHAR_W = 12;
         const CHAR_H = 22;
-        const COLS = 16;
+        const COLS_PER_ROW = 16;
+        const TERM_COLS = 80;
+        const TERM_ROWS = 30;
 
-        // КАРТА СИМВОЛОВ: какой символ лежит на какой позиции (индексе)
-        // Мы её построим автоматически, просканировав картинку
-        let charMap = {};
-
-        // ============================================================
-        // 2. ЛОГИ ДЛЯ ВЫВОДА
-        // ============================================================
         const logLines = [
             '*****************************************',
             '*         WELCOME TO KINDLE              *',
@@ -52,10 +85,10 @@
             '*****************************************',
             '',
             '[    0.000000] Booting Linux on physical CPU 0x0',
-            '[    0.000000] Linux version 3.0.35-lab126 (lab126@sw027)',
-            '[    0.000000] CPU: ARMv7 Processor [412fc09a] revision 10',
+            '[    0.000000] Linux version 3.0.35-lab126 (lab126@sw027) (gcc version 4.5.1)',
+            '[    0.000000] CPU: ARMv7 Processor [412fc09a] revision 10 (ARMv7)',
             '[    0.000000] Memory: 512MB = 512MB total',
-            '[    0.390000] EXT3-fs (mmcblk0p1): mounted filesystem',
+            '[    0.390000] EXT3-fs (mmcblk0p1): mounted filesystem with writeback data mode',
             '[    4.230000] EPDC: 1st update marker - pre-initialization flash',
             '[    5.450000] input: framework_keypad as /devices/virtual/input/input0',
             '[    6.520000] Battery: 4.172 Volts, 31 Degrees C, Charging',
@@ -67,155 +100,131 @@
             'login[1890]: root login on \'ttyS0\''
         ];
 
-        // ============================================================
-        // 3. РАСПОЗНАЁМ КАРТИНКУ: строим карту символов
-        // ============================================================
-        function buildCharMap() {
-            // Создаём временный канвас для анализа картинки
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = fontImage.width;
-            tempCanvas.height = fontImage.height;
-            const tempCtx = tempCanvas.getContext('2d');
-            tempCtx.drawImage(fontImage, 0, 0);
+        const canvas = document.getElementById('logCanvas');
+        const ctx = canvas.getContext('2d');
+        const logoContainer = document.getElementById('logoContainer');
 
-            const totalRows = Math.floor(fontImage.height / CHAR_H);
-            const totalCols = Math.floor(fontImage.width / CHAR_W);
+        const fontImage = new Image();
+        fontImage.src = '12x22.png';
 
-            // Список символов в том порядке, в котором они идут в ASCII
-            const asciiChars = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~';
-            
-            // Мы НЕ знаем, в каком порядке символы на картинке.
-            // Поэтому мы просто сопоставляем: индекс на картинке -> символ.
-            // Для этого мы вырезаем каждый символ и "угадываем", что это за символ.
-            // Но проще: ПОЗВОЛИМ ПОЛЬЗОВАТЕЛЮ СКАЗАТЬ, ГДЕ КАКИЕ СИМВОЛЫ.
-            
-            // Вместо автоматического распознавания (оно сложное),
-            // мы просто предположим, что символы идут в правильном порядке,
-            // НО сдвинуты на несколько позиций.
-            // Давайте попробуем найти букву 'A' вручную.
-            
-            console.log('=== АНАЛИЗ КАРТИНКИ ===');
-            console.log(`Размер: ${fontImage.width}×${fontImage.height}`);
-            console.log(`Символов в ширину: ${totalCols}, в высоту: ${totalRows}`);
-            console.log(`Всего символов: ${totalCols * totalRows}`);
-            
-            // Выводим все символы с их индексами для отладки
-            for (let row = 0; row < totalRows; row++) {
-                let line = '';
-                for (let col = 0; col < totalCols; col++) {
-                    const idx = row * totalCols + col;
-                    line += `${idx.toString().padStart(3, ' ')} `;
-                }
-                console.log(line);
-            }
+        let currentLine = 0;
+        let lineDelay = 30;
 
-            // Строим карту: индекс -> символ
-            // ПРЕДПОЛОЖИМ, что символы идут в стандартном ASCII порядке,
-            // начиная с пробела (0x20)
-            for (let i = 0; i < totalCols * totalRows && i < asciiChars.length; i++) {
-                charMap[i] = asciiChars[i];
-            }
-
-            // Если символов больше, чем в ASCII, заполняем заглушками
-            for (let i = asciiChars.length; i < totalCols * totalRows; i++) {
-                charMap[i] = '?';
-            }
-
-            console.log('Карта символов построена (предположительно)');
-            console.log('Индекс 0:', charMap[0], '(должен быть пробел)');
-            console.log('Индекс 33:', charMap[33], '(должна быть A)');
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
         }
 
-        // ============================================================
-        // 4. ФУНКЦИЯ ОТРИСОВКИ СИМВОЛА
-        // ============================================================
-        function drawChar(ctx, img, charCode, x, y) {
-            // Ищем, есть ли такой символ в нашей карте
-            let foundIndex = -1;
-            for (let idx in charMap) {
-                if (charMap[idx] === String.fromCharCode(charCode)) {
-                    foundIndex = parseInt(idx);
-                    break;
+        function drawChar(img, code, x, y, useBold) {
+            if (code < 0x20 || code > 0x7E) return;
+            const index = code - 0x20;
+            if (index < 0 || index >= 96) return;
+
+            const col = index % COLS_PER_ROW;
+            const row = useBold ? 1 : 0;
+
+            const sx = col * CHAR_W;
+            const sy = row * CHAR_H;
+
+            ctx.drawImage(
+                img,
+                sx, sy, CHAR_W, CHAR_H,
+                x, y, CHAR_W, CHAR_H
+            );
+        }
+
+        function renderLine(line, rowIndex) {
+            if (!line) return;
+            const yPos = rowIndex * CHAR_H;
+            for (let col = 0; col < line.length && col < TERM_COLS; col++) {
+                const code = line.charCodeAt(col);
+                if (code >= 0x20 && code <= 0x7E) {
+                    const bold = (code !== 0x20);
+                    drawChar(fontImage, code, col * CHAR_W, yPos, bold);
                 }
             }
+        }
 
-            if (foundIndex === -1) {
-                // Символ не найден — рисуем квадратик
-                ctx.fillStyle = '#333';
-                ctx.fillRect(x, y, CHAR_W, CHAR_H);
+        function renderAllLines() {
+            // Очищаем только область с текстом (оставляем фон E Ink)
+            // Но canvas прозрачный, поэтому просто ничего не делаем с фоном
+            
+            // Рисуем все строки до currentLine
+            for (let row = 0; row <= currentLine && row < logLines.length && row < TERM_ROWS; row++) {
+                const line = logLines[row];
+                renderLine(line, row);
+            }
+        }
+
+        function renderNextLine() {
+            if (currentLine >= logLines.length) {
+                console.log('✅ Boot complete!');
                 return;
             }
 
-            const totalCols = Math.floor(img.width / CHAR_W);
-            const col = foundIndex % totalCols;
-            const row = Math.floor(foundIndex / totalCols);
+            const line = logLines[currentLine];
+            renderLine(line, currentLine);
+            currentLine++;
 
-            // ВНИМАНИЕ: берём ТОЛЬКО из нижнего ряда (жирный шрифт)
-            // Если row > 0, используем его как есть
-            // Если нужен жирный — берём row + 1 (если есть)
-            let sy = row * CHAR_H;
-            
-            // Для жирного шрифта используем нечётные ряды
-            // (предполагаем, что жирный ряд идёт сразу после обычного)
-            // ВАРИАНТ: если row чётный, берём следующий ряд для жирного
-            // Но проще: используем ТОЛЬКО нижний ряд (индексы 16-31)
-            // Для этого сдвигаем индекс на 16
-            const boldIndex = foundIndex + 16;
-            if (boldIndex < (img.width / CHAR_W) * (img.height / CHAR_H)) {
-                const boldCol = boldIndex % totalCols;
-                const boldRow = Math.floor(boldIndex / totalCols);
-                const sx = boldCol * CHAR_W;
-                sy = boldRow * CHAR_H;
-            }
-
-            const sx = col * CHAR_W;
-            
-            ctx.drawImage(img, sx, sy, CHAR_W, CHAR_H, x, y, CHAR_W, CHAR_H);
-        }
-
-        // ============================================================
-        // 5. ОСНОВНАЯ ФУНКЦИЯ ОТРИСОВКИ
-        // ============================================================
-        const TERM_COLS = 80;
-        const TERM_ROWS = 30;
-
-        const canvas = document.getElementById('log');
-        canvas.width = TERM_COLS * CHAR_W;
-        canvas.height = TERM_ROWS * CHAR_H;
-        const ctx = canvas.getContext('2d');
-
-        function renderLog() {
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            for (let row = 0; row < logLines.length && row < TERM_ROWS; row++) {
-                const line = logLines[row];
-                if (!line) continue;
-
-                for (let col = 0; col < line.length && col < TERM_COLS; col++) {
-                    const code = line.charCodeAt(col);
-                    if (code >= 0x20 && code <= 0x7E) {
-                        drawChar(ctx, fontImage, code, col * CHAR_W, row * CHAR_H);
-                    }
-                }
+            if (currentLine < logLines.length) {
+                setTimeout(renderNextLine, lineDelay);
+            } else {
+                // Логотип исчезает, когда лог почти дописан
+                logoContainer.classList.add('hidden');
             }
         }
 
-        // ============================================================
-        // 6. ЗАПУСК
-        // ============================================================
+        function startBoot() {
+            resizeCanvas();
+
+            // Ждём загрузки шрифта
+            if (!fontImage.complete || fontImage.naturalWidth === 0) {
+                fontImage.onload = function() {
+                    startRendering();
+                };
+                return;
+            }
+            startRendering();
+        }
+
+        function startRendering() {
+            // Лого видно, начинаем печатать
+            logoContainer.classList.remove('hidden');
+            currentLine = 0;
+            // Очищаем canvas (прозрачный фон)
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            renderNextLine();
+        }
+
+        // Изменение размера окна
+        window.addEventListener('resize', resizeCanvas);
+
+        // Запуск
         fontImage.onload = function() {
-            buildCharMap();
-            renderLog();
-            console.log('✅ Лог отрисован! Если буквы не те — напишите, я поправлю.');
+            startBoot();
         };
 
         fontImage.onerror = function() {
             console.error('❌ 12x22.png не найден!');
-            ctx.fillStyle = '#0f0';
+            // Показываем ошибку прямо на экране
+            ctx.fillStyle = '#000';
             ctx.font = '14px monospace';
             ctx.fillText('ERROR: 12x22.png not found!', 10, 30);
         };
-    </script>
+
+        // Если картинка уже загружена
+        if (fontImage.complete && fontImage.naturalWidth > 0) {
+            startBoot();
+        }
+
+        // Повторный запуск при клике (для удобства)
+        document.addEventListener('click', function() {
+            if (currentLine >= logLines.length) {
+                startRendering();
+            }
+        });
+    })();
+</script>
 </body>
 </html>
