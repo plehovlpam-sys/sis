@@ -10,7 +10,7 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background: #000000;
+            background: #ffffff;
         }
         body {
             display: flex;
@@ -21,7 +21,7 @@
             position: relative;
             width: 100vw;
             height: 100vh;
-            background: #000000;
+            background: #ffffff;
             overflow: hidden;
             transition: background 0.05s ease;
         }
@@ -102,16 +102,29 @@
         #videoContainer.big #bootVideo {
             max-width: 160px;
         }
+        #loadingIndicator {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #888;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 20;
+            opacity: 0.5;
+            display: none;
+        }
     </style>
 </head>
 <body>
 <div class="screen" id="screen">
+    <div id="loadingIndicator">Loading resources...</div>
     <div class="logo" id="logoContainer">
-        <img src="vidboot_do_logov.jpg" alt="Kindle" id="logoImg">
+        <img src="logos/vidboot_do_logov.jpg" alt="Kindle" id="logoImg">
     </div>
     <div id="videoContainer">
         <video id="bootVideo" muted playsinline loop>
-            <source src="vidboot.mp4" type="video/mp4">
+            <source src="logos/vidboot.mp4" type="video/mp4">
         </video>
     </div>
     <div class="tux" id="tuxContainer">
@@ -122,10 +135,89 @@
 
 <script>
     // ============================================================
+    // 0. ПРЕДЗАГРУЗКА РЕСУРСОВ В LOCALSTORAGE
+    // ============================================================
+    const RESOURCES = [
+        { name: '12x22.png', url: '12x22.png', type: 'image' },
+        { name: 'biosimitation.png', url: 'biosimitation.png', type: 'image' },
+        { name: 'biosimitationpt2.png', url: 'biosimitationpt2.png', type: 'image' },
+        { name: 'tux.png', url: 'tux.png', type: 'image' },
+        { name: 'vidboot_do_logov.jpg', url: 'logos/vidboot_do_logov.jpg', type: 'image' },
+        { name: 'vidboot.mp4', url: 'logos/vidboot.mp4', type: 'video' }
+    ];
+
+    const STORAGE_KEY = 'kindle_boot_cache';
+
+    async function preloadResources() {
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        loadingIndicator.style.display = 'block';
+
+        // Проверяем, есть ли уже закешированные ресурсы
+        const cached = localStorage.getItem(STORAGE_KEY);
+        const cacheMap = cached ? JSON.parse(cached) : {};
+
+        for (const resource of RESOURCES) {
+            // Если ресурс уже есть в кеше и не изменился — пропускаем
+            if (cacheMap[resource.name]) {
+                console.log(`✅ ${resource.name} уже в кеше`);
+                continue;
+            }
+
+            try {
+                console.log(`⏳ Загрузка ${resource.name}...`);
+                const response = await fetch(resource.url);
+                const blob = await response.blob();
+                
+                // Конвертируем в base64 для хранения в localStorage
+                const reader = new FileReader();
+                const data = await new Promise((resolve) => {
+                    reader.onload = () => resolve(reader.result);
+                    reader.readAsDataURL(blob);
+                });
+
+                cacheMap[resource.name] = {
+                    data: data,
+                    type: resource.type,
+                    size: blob.size,
+                    timestamp: Date.now()
+                };
+
+                console.log(`✅ ${resource.name} загружен (${(blob.size / 1024).toFixed(1)} KB)`);
+            } catch (e) {
+                console.warn(`⚠️ Не удалось загрузить ${resource.name}:`, e);
+            }
+        }
+
+        // Сохраняем в localStorage
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(cacheMap));
+            console.log('💾 Все ресурсы сохранены в localStorage');
+        } catch (e) {
+            console.warn('⚠️ Не удалось сохранить в localStorage (возможно, превышен лимит):', e);
+        }
+
+        loadingIndicator.style.display = 'none';
+        return cacheMap;
+    }
+
+    // Функция для получения ресурса из кеша или с сервера
+    function getResourceUrl(name) {
+        const cached = localStorage.getItem(STORAGE_KEY);
+        if (cached) {
+            const cacheMap = JSON.parse(cached);
+            if (cacheMap[name]) {
+                return cacheMap[name].data;
+            }
+        }
+        // Если в кеше нет — возвращаем оригинальный URL
+        const resource = RESOURCES.find(r => r.name === name);
+        return resource ? resource.url : null;
+    }
+
+    // ============================================================
     // 1. ЗАГРУЖАЕМ КАРТИНКУ
     // ============================================================
-    const fontImage = new Image();
-    fontImage.src = '12x22.png';
+    let fontImage = new Image();
 
     const CHAR_W = 12;
     const CHAR_H = 22;
@@ -344,14 +436,33 @@
     // ============================================================
     let bootSequenceRunning = false;
 
+    // Функция для загрузки изображения из кеша или с сервера
+    function loadImageFromCache(name, imgElement) {
+        const cached = localStorage.getItem(STORAGE_KEY);
+        if (cached) {
+            const cacheMap = JSON.parse(cached);
+            if (cacheMap[name]) {
+                imgElement.src = cacheMap[name].data;
+                return true;
+            }
+        }
+        // Если в кеше нет — используем оригинальный URL
+        const resource = RESOURCES.find(r => r.name === name);
+        if (resource) {
+            imgElement.src = resource.url;
+            return false;
+        }
+        return false;
+    }
+
     async function startBootSequence() {
         if (bootSequenceRunning) return;
         bootSequenceRunning = true;
         isBootComplete = false;
 
-        // --- ШАГ 1: Чёрный фон, ничего нет, ждём 2.5 секунды ---
-        screen.style.background = '#000000';
-        canvas.style.opacity = '1';
+        // --- ШАГ 0: Белый фон, предзагрузка ресурсов ---
+        screen.style.background = '#ffffff';
+        canvas.style.opacity = '0';
         logoContainer.classList.remove('show');
         logoContainer.classList.remove('big');
         videoContainer.classList.remove('show');
@@ -359,42 +470,67 @@
         tuxContainer.classList.remove('show');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        await new Promise(resolve => setTimeout(resolve, 2500));
+        // Загружаем все ресурсы в localStorage (пока пользователь ничего не видит)
+        await preloadResources();
 
-        // --- ШАГ 2: Быстрая смена на чёрный фон (уже чёрный) ---
+        // Загружаем шрифт из кеша
+        const fontUrl = getResourceUrl('12x22.png');
+        if (fontUrl) {
+            fontImage.src = fontUrl;
+        } else {
+            fontImage.src = '12x22.png';
+        }
+
+        // Ждём загрузки шрифта
+        await new Promise((resolve) => {
+            if (fontImage.complete && fontImage.naturalWidth > 0) {
+                resolve();
+            } else {
+                fontImage.onload = resolve;
+                fontImage.onerror = resolve;
+            }
+        });
+
+        buildCharMap();
+        fitCanvas();
+
+        // --- ШАГ 1: Чёрный фон, ждём 0.5 секунды ---
         await flickerBackground('#000000', 3, 30);
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-        // --- ШАГ 3: Показываем логотип biosimitation.png ---
-        logoImg.src = 'biosimitation.png';
+        // --- ШАГ 2: Показываем логотип biosimitation.png ---
+        loadImageFromCache('biosimitation.png', logoImg);
         logoContainer.classList.add('show');
 
-        // --- ШАГ 4: Выводим сообщение Recovery ---
+        // --- ШАГ 3: Выводим сообщение Recovery ---
         renderTextOnCanvas(recoveryMessage, 10);
 
-        // --- ШАГ 5: Ждём 3 секунды ---
+        // --- ШАГ 4: Ждём 3 секунды ---
         await new Promise(resolve => setTimeout(resolve, 3000));
 
-        // --- ШАГ 6: Быстрая смена на чёрный фон ---
+        // --- ШАГ 5: Быстрая смена на чёрный фон ---
         await flickerBackground('#000000', 3, 30);
 
-        // --- ШАГ 7: Меняем лого на biosimitationpt2.png и показываем Tux ---
-        logoImg.src = 'biosimitationpt2.png';
+        // --- ШАГ 6: Меняем лого на biosimitationpt2.png и показываем Tux ---
+        loadImageFromCache('biosimitationpt2.png', logoImg);
         logoContainer.classList.add('show');
+        loadImageFromCache('tux.png', document.querySelector('.tux img'));
         tuxContainer.classList.add('show');
 
-        // --- ШАГ 8: Ждём 1 секунду ---
+        // --- ШАГ 7: Ждём 1 секунду ---
         await new Promise(resolve => setTimeout(resolve, 1000));
 
-        // --- ШАГ 9: Убираем Tux и pt2, показываем vidboot_do_logov.png ---
+        // --- ШАГ 8: Убираем Tux и pt2, показываем vidboot_do_logov.jpg ---
         tuxContainer.classList.remove('show');
-        logoImg.src = 'vidboot_do_logov.png';
+        loadImageFromCache('vidboot_do_logov.jpg', logoImg);
         logoContainer.classList.add('show');
         
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         currentLine = 0;
+        canvas.style.opacity = '1';
         renderNextLine();
 
-        // --- ШАГ 10: Ждём 4 секунды после завершения логов ---
+        // --- ШАГ 9: Ждём 4 секунды после завершения логов ---
         await new Promise(resolve => {
             const checkComplete = setInterval(() => {
                 if (isBootComplete) {
@@ -404,16 +540,22 @@
             }, 100);
         });
 
-        // --- ШАГ 11: Мгновенно убираем логи и лого ---
+        // --- ШАГ 10: Мгновенно убираем логи и лого ---
         canvas.style.opacity = '0';
         logoContainer.classList.remove('show');
 
-        // --- ШАГ 12: Показываем видео vidboot.mp4 ---
+        // --- ШАГ 11: Показываем видео vidboot.mp4 ---
+        const videoUrl = getResourceUrl('vidboot.mp4');
+        if (videoUrl) {
+            bootVideo.src = videoUrl;
+        } else {
+            bootVideo.src = 'logos/vidboot.mp4';
+        }
         videoContainer.classList.add('show');
         bootVideo.currentTime = 0;
         bootVideo.play();
 
-        // --- ШАГ 13: Чёрное моргание (0.01s) ---
+        // --- ШАГ 12: Чёрное моргание (0.01s) ---
         screen.style.background = '#000000';
         await new Promise(resolve => setTimeout(resolve, 10));
         screen.style.background = '#000000';
@@ -425,33 +567,17 @@
     // 11. ЗАПУСК
     // ============================================================
     function start() {
-        buildCharMap();
-        fitCanvas();
         startBootSequence();
     }
 
-    fontImage.onload = function() {
-        console.log('✅ Шрифт загружен');
-        start();
-    };
-
-    fontImage.onerror = function() {
-        console.error('❌ 12x22.png не найден!');
-        ctx.fillStyle = '#0f0';
-        ctx.font = '14px monospace';
-        ctx.fillText('ERROR: 12x22.png not found!', 10, 30);
-    };
-
-    if (fontImage.complete && fontImage.naturalWidth > 0) {
-        start();
-    }
+    // Запускаем сразу, без ожидания загрузки шрифта (он загрузится в preload)
+    start();
 
     // ============================================================
     // 12. ПЕРЕЗАПУСК ПО КЛИКУ
     // ============================================================
     document.addEventListener('click', function() {
         if (!bootSequenceRunning) {
-            // Останавливаем видео если оно играет
             bootVideo.pause();
             bootVideo.currentTime = 0;
             videoContainer.classList.remove('show');
