@@ -47,7 +47,7 @@
 </head>
 <body>
 <div class="screen">
-    <div class="logo" id="logoContainer">
+    <div class="logo">
         <img src="logokindle.png" alt="Kindle">
     </div>
     <canvas id="log"></canvas>
@@ -64,10 +64,30 @@
     const CHAR_H = 22;
     const COLS = 16;
 
+    // ============================================================
+    // 2. КАРТА СИМВОЛОВ (ЖЁСТКО ЗАДАНА, КАК В РАБОЧЕМ ПРИМЕРЕ)
+    // ============================================================
+    // Все 95 печатных ASCII символов в правильном порядке
+    const ASCII_CHARS = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~';
+    
+    // Строим карту: символ -> индекс на картинке
+    // Предполагаем, что символы на картинке идут в ТОМ ЖЕ порядке, что и в ASCII
+    function buildCharMap() {
+        const totalRows = Math.floor(fontImage.height / CHAR_H);
+        const totalCols = Math.floor(fontImage.width / CHAR_W);
+        const totalChars = totalRows * totalCols;
+        
+        const map = {};
+        for (let i = 0; i < totalChars && i < ASCII_CHARS.length; i++) {
+            map[ASCII_CHARS[i]] = i;
+        }
+        return map;
+    }
+
     let charMap = {};
 
     // ============================================================
-    // 2. ЛОГИ
+    // 3. ЛОГИ
     // ============================================================
     const logLines = [
         '*****************************************',
@@ -96,55 +116,39 @@
     ];
 
     // ============================================================
-    // 3. КАРТА СИМВОЛОВ
-    // ============================================================
-    function buildCharMap() {
-        const totalRows = Math.floor(fontImage.height / CHAR_H);
-        const totalCols = Math.floor(fontImage.width / CHAR_W);
-        const asciiChars = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~';
-        
-        for (let i = 0; i < totalCols * totalRows && i < asciiChars.length; i++) {
-            charMap[i] = asciiChars[i];
-        }
-        for (let i = asciiChars.length; i < totalCols * totalRows; i++) {
-            charMap[i] = '?';
-        }
-    }
-
-    // ============================================================
-    // 4. ОТРИСОВКА СИМВОЛА
+    // 4. ОТРИСОВКА СИМВОЛА (ТОЧНО КАК В РАБОЧЕМ ПРИМЕРЕ)
     // ============================================================
     function drawChar(ctx, img, charCode, x, y) {
-        let foundIndex = -1;
-        for (let idx in charMap) {
-            if (charMap[idx] === String.fromCharCode(charCode)) {
-                foundIndex = parseInt(idx);
-                break;
-            }
-        }
-
-        if (foundIndex === -1) {
+        const char = String.fromCharCode(charCode);
+        
+        // Ищем индекс символа в карте
+        let foundIndex = charMap[char];
+        if (foundIndex === undefined) {
+            // Символ не найден — рисуем серый квадратик
             ctx.fillStyle = '#ccc';
             ctx.fillRect(x, y, CHAR_W, CHAR_H);
             return;
         }
 
         const totalCols = Math.floor(img.width / CHAR_W);
-        const col = foundIndex % totalCols;
-        const row = Math.floor(foundIndex / totalCols);
+        const totalRows = Math.floor(img.height / CHAR_H);
+        const totalChars = totalCols * totalRows;
 
-        // Берём жирный шрифт (нижний ряд)
-        const boldIndex = foundIndex + 16;
+        // Обычный ряд
+        let col = foundIndex % totalCols;
+        let row = Math.floor(foundIndex / totalCols);
         let sx = col * CHAR_W;
         let sy = row * CHAR_H;
-        
-        if (boldIndex < (img.width / CHAR_W) * (img.height / CHAR_H)) {
+
+        // Пытаемся взять жирный шрифт (сдвиг на 16 индексов вниз)
+        const boldIndex = foundIndex + 16;
+        if (boldIndex < totalChars) {
             const boldCol = boldIndex % totalCols;
             const boldRow = Math.floor(boldIndex / totalCols);
             sx = boldCol * CHAR_W;
             sy = boldRow * CHAR_H;
         }
-        
+
         ctx.drawImage(img, sx, sy, CHAR_W, CHAR_H, x, y, CHAR_W, CHAR_H);
     }
 
@@ -157,22 +161,17 @@
     const canvas = document.getElementById('log');
     const ctx = canvas.getContext('2d');
 
-    // Размер канваса — фиксированный, чтобы шрифт был маленьким
-    // 80 колонок × 12px = 960px, 30 строк × 22px = 660px
+    // Размер канваса: 80×12 = 960px, 30×22 = 660px
     canvas.width = TERM_COLS * CHAR_W;
     canvas.height = TERM_ROWS * CHAR_H;
 
-    // Центрируем канвас через CSS
+    // Позиционируем в левом верхнем углу
     canvas.style.position = 'absolute';
     canvas.style.top = '0';
     canvas.style.left = '0';
-    canvas.style.width = '960px';
-    canvas.style.height = '660px';
-    canvas.style.transform = 'scale(1)';
-    canvas.style.transformOrigin = 'top left';
 
     // ============================================================
-    // 6. АНИМИРОВАННЫЙ ВЫВОД
+    // 6. АНИМИРОВАННЫЙ ВЫВОД ПОСТРОЧНО
     // ============================================================
     let currentLine = 0;
     const lineDelay = 40;
@@ -203,10 +202,14 @@
     // 7. ЗАПУСК
     // ============================================================
     fontImage.onload = function() {
-        buildCharMap();
+        charMap = buildCharMap();
+        console.log('✅ Шрифт загружен, карта построена');
+        console.log('Пробел -> индекс', charMap[' ']);
+        console.log('A -> индекс', charMap['A']);
+        console.log('a -> индекс', charMap['a']);
+        
         // Очищаем канвас (прозрачный фон)
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        console.log('✅ Шрифт загружен, начинаем загрузку...');
         renderNextLine();
     };
 
@@ -219,9 +222,21 @@
 
     // Если картинка уже загружена
     if (fontImage.complete && fontImage.naturalWidth > 0) {
-        buildCharMap();
+        charMap = buildCharMap();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         renderNextLine();
     }
+
+    // ============================================================
+    // 8. ПЕРЕЗАПУСК ПО КЛИКУ
+    // ============================================================
+    document.addEventListener('click', function() {
+        if (currentLine >= logLines.length) {
+            currentLine = 0;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            renderNextLine();
+        }
+    });
 </script>
 </body>
 </html>
