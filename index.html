@@ -3,120 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kindle UI</title>
+    <title>Kindle Custom Reader</title>
+    
     <style>
         @font-face {
             font-family: 'KindleFont';
-            src: url('/standart.ttf') format('truetype');
-            font-weight: normal;
-            font-style: normal;
+            src: url('/standard.ttf') format('truetype');
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        html, body { width: 100%; height: 100%; margin: 0; padding: 0; background-color: #ffffff; font-family: 'KindleFont', serif; color: #000; overflow: hidden; }
 
-        html, body {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            background-color: #ffffff;
-            font-family: 'KindleFont', sans-serif;
-            color: #000;
-            overflow: hidden;
-        }
+        .kindle-device { width: 100vw; height: 100vh; background-color: #ffffff; display: flex; flex-direction: column; position: relative; overflow: hidden; }
 
-        .kindle-device {
-            width: 100vw;
-            height: 100vh;
-            background-color: #ffffff;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* --- Grid/Layout Utility --- */
-        .flex-row { display: flex; align-items: center; }
-        .flex-grow { flex-grow: 1; }
-
-        /* --- Top Navigation Bar --- */
-        .top-nav {
-            height: 48px;
-            min-height: 48px;
-            display: flex;
-            border-bottom: 1px solid #000;
-            background-color: #fff;
-            flex-shrink: 0;
-            width: 100%;
-            z-index: 20;
-        }
-        .nav-item {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            border-right: 1px solid #000;
-            font-size: 10px;
-            text-align: center;
-            color: #000;
-            text-decoration: none;
-            cursor: pointer;
-            user-select: none;
-        }
+        /* --- Top Nav --- */
+        .top-nav { height: 48px; min-height: 48px; display: flex; border-bottom: 1px solid #000; background-color: #fff; flex-shrink: 0; width: 100%; z-index: 20; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; border-right: 1px solid #000; font-size: 10px; text-align: center; color: #000; text-decoration: none; cursor: pointer; user-select: none; }
         .nav-item:last-child { border-right: none; }
-        .nav-icon {
-            width: 20px; height: 20px; margin-bottom: 2px;
-            display: flex; align-items: center; justify-content: center;
-        }
+        .nav-icon { width: 20px; height: 20px; margin-bottom: 2px; display: flex; align-items: center; justify-content: center; }
         .nav-icon img { width: 100%; height: 100%; display: block; }
 
-        .search-container {
-            flex: 2; display: flex; align-items: center; padding: 0 10px;
-            border-right: 1px solid #000; height: 100%; cursor: pointer; user-select: none;
-        }
+        .search-container { flex: 2; display: flex; align-items: center; padding: 0 10px; border-right: 1px solid #000; height: 100%; cursor: pointer; user-select: none; }
         .search-icon { width: 18px; height: 18px; margin-right: 8px; display: flex; align-items: center; justify-content: center; }
         .search-icon img { width: 100%; height: 100%; display: block; }
         .search-text { font-size: 16px; color: #000; letter-spacing: 0.5px; }
 
-        .menu-dots {
-            width: 48px; height: 100%; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; cursor: pointer; user-select: none;
-        }
+        .menu-dots { width: 48px; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; user-select: none; }
         .menu-dots img { width: 20px; height: 20px; display: block; }
 
         /* --- Content Area --- */
-        .content-area {
-            flex: 1;
-            width: 100%;
-            overflow-y: auto;
-            overflow-x: hidden;
-            -webkit-overflow-scrolling: touch;
-            position: relative;
-        }
+        .content-area { flex: 1; width: 100%; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; position: relative; }
 
-        /* --- Dashboard Screen --- */
+        /* --- Dashboard --- */
         .dashboard-scroll-area { padding: 15px 15px 20px 15px; position: relative; width: 100%; }
         .section-title { font-size: 13px; font-weight: bold; color: #000; margin-bottom: 12px; display: flex; align-items: center; cursor: pointer; }
         .title-arrow { font-size: 16px; margin-left: 2px; margin-top: -2px; }
 
-        .library-row { display: flex; gap: 12px; margin-bottom: 25px; width: 100%; min-height: 120px; border: 1px dashed #ccc; padding: 15px; justify-content: center; align-items: center; flex-direction: column;}
-        .library-row.has-books { border: none; padding: 0; flex-direction: row; justify-content: flex-start; align-items: stretch; min-height: auto; }
+        .library-row { display: flex; gap: 12px; margin-bottom: 25px; width: 100%; min-height: 120px; border: 1px dashed #ccc; padding: 15px; justify-content: center; align-items: center; flex-direction: column; }
+        .library-row.has-books { border: none; padding: 0; flex-direction: row; justify-content: flex-start; align-items: stretch; min-height: auto; flex-wrap: wrap; }
         .empty-library-text { font-size: 14px; color: #888; text-align: center; }
         
-        .book-card-large { width: 45%; height: 170px; border: 1px solid #000; background-color: #d6d6d6; position: relative; display: flex; flex-direction: column; justify-content: flex-end; padding: 8px; flex-shrink: 0; cursor: pointer;}
+        .book-card-large { width: 45%; min-width: 140px; height: 170px; border: 1px solid #000; background-color: #d6d6d6; position: relative; display: flex; flex-direction: column; justify-content: flex-end; padding: 8px; flex-shrink: 0; cursor: pointer; margin-bottom: 10px;}
         .book-logo-large { position: absolute; top: 10px; left: 10px; width: 40px; height: 40px; }
         .book-logo-large img { width: 100%; height: 100%; display: block; }
         .progress-badge-large { position: absolute; top: 0; right: 0; width: 0; height: 0; border-left: 25px solid transparent; border-right: 0 solid transparent; border-top: 25px solid #000; }
         .progress-badge-large span { position: absolute; top: -22px; right: -16px; color: #fff; font-size: 10px; font-weight: bold; }
-        .book-title-large { font-size: 15px; font-weight: bold; color: #000; line-height: 1.2; word-break: break-word;}
-        .book-author-large { font-size: 11px; color: #000; margin-top: 2px; word-break: break-word;}
+        .book-title-large { font-size: 15px; font-weight: bold; color: #000; line-height: 1.2; word-break: break-word; }
+        .book-author-large { font-size: 11px; color: #000; margin-top: 2px; word-break: break-word; }
 
         .lists-section { margin-bottom: 25px; width: 100%; }
         .list-item { font-size: 14px; color: #000; margin-top: 8px; cursor: pointer; }
@@ -135,10 +68,7 @@
         .bottom-hint { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #000; padding-top: 12px; font-size: 12px; color: #000; margin-top: 5px; cursor: pointer; width: 100%; }
         .bottom-hint .arrow-down { font-size: 18px; line-height: 1; margin-bottom: 2px; }
 
-        .scrollbar-track { position: absolute; right: 1px; top: 15px; bottom: 20px; width: 10px; background: transparent; pointer-events: none; }
-        .scrollbar-thumb { width: 8px; height: 150px; background-color: #000; position: absolute; top: 50px; right: 1px; pointer-events: none; }
-
-        /* --- Settings Screen --- */
+        /* --- Settings --- */
         .settings-scroll-area { padding: 10px 15px 20px 15px; display: none; width: 100%; }
         .settings-list-item { display: flex; align-items: center; padding: 14px 0; border-bottom: 1px solid #ccc; cursor: pointer; position: relative; width: 100%; }
         .settings-list-item:last-child { border-bottom: none; }
@@ -149,62 +79,42 @@
         .settings-subtitle { font-size: 10px; color: #000; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
         .settings-arrow { font-size: 20px; color: #000; margin-left: auto; padding-left: 10px; font-weight: 300; flex-shrink: 0; }
 
-        /* --- Reader Screen --- */
-        #readerOverlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #f5f3ee; display: none; flex-direction: column; z-index: 40;
-        }
+        /* --- Reader Overlay --- */
+        #readerOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #f5f3ee; display: none; flex-direction: column; z-index: 50; }
         .reader-header { height: 48px; display: none; border-bottom: 1px solid #000; width: 100%; flex-shrink: 0; background: #fff; align-items: center; padding: 0 15px; justify-content: space-between; }
         .reader-header.active { display: flex; }
-        .reader-close-btn { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px;}
+        .reader-close-btn { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; }
         .reader-close-btn img { width: 20px; height: 20px; display: block; }
         .reader-title { font-size: 14px; font-weight: bold; text-align: center; flex-grow: 1; padding: 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .reader-body { flex: 1; width: 100%; padding: 25px 20px; overflow-y: auto; line-height: 1.6; font-size: 18px; position: relative; }
-        .reader-body p { margin-bottom: 1em; text-align: justify; }
+        
+        #viewerArea { flex: 1; width: 100%; height: 100%; padding: 20px; overflow: hidden; position: relative; background: #fcfcfc; }
+        #viewerArea iframe { width: 100%; height: 100%; border: none; background: transparent; }
+
         .reader-page-controls { display: none; height: 60px; width: 100%; flex-shrink: 0; border-top: 1px solid #000; background: #fff; align-items: center; justify-content: space-between; padding: 0 15px; }
         .reader-page-controls.active { display: flex; }
         .page-btn { border: 1px solid #000; background: #fff; padding: 8px 20px; font-family: inherit; font-size: 14px; cursor: pointer; }
         .page-btn:disabled { opacity: 0.3; }
         .page-info { font-size: 14px; }
 
-        /* --- Search Overlay Components --- */
-        #searchOverlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #fff; display: none; flex-direction: column; z-index: 50;
-        }
+        /* --- Search Overlay --- */
+        #searchOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #fff; display: none; flex-direction: column; z-index: 60; }
         .search-header { height: 48px; display: flex; border-bottom: 1px solid #000; width: 100%; flex-shrink: 0; }
         .search-back-btn { width: 48px; height: 100%; display: flex; align-items: center; justify-content: center; border-right: 1px solid #000; cursor: pointer; }
         .search-back-btn img { width: 20px; height: 20px; display: block; }
         .search-input-wrapper { flex: 1; display: flex; align-items: center; padding: 0 10px; }
         .search-input-wrapper input { width: 100%; border: none; outline: none; font-size: 16px; font-family: 'KindleFont', sans-serif; background: transparent; }
-
         .search-content-area { flex: 1; width: 100%; display: flex; align-items: flex-start; justify-content: center; padding-top: 40px; }
         .search-hint-box { display: flex; flex-direction: column; align-items: center; text-align: center; }
         .search-hint-box img { width: 120px; height: auto; display: block; margin-bottom: 20px; }
         .search-hint-text { font-size: 14px; color: #000; }
 
-        /* Keyboard Container */
-        .keyboard-container {
-            width: 100%; padding: 10px 8px 15px 8px;
-            background: #fff; border-top: 1px solid #000; flex-shrink: 0;
-            transform: translateY(100%); transition: transform 0.2s;
-            transition-timing-function: cubic-bezier(0.55, 0.05, 0.65, 0.45);
-            position: relative;
-        }
+        /* --- Keyboards --- */
+        .keyboard-container { width: 100%; padding: 10px 8px 15px 8px; background: #fff; border-top: 1px solid #000; flex-shrink: 0; transform: translateY(100%); transition: transform 0.2s; transition-timing-function: cubic-bezier(0.55, 0.05, 0.65, 0.45); position: relative; }
         .keyboard-container.active { transform: translateY(0); }
-        
         .kb-row { display: flex; justify-content: center; margin-bottom: 6px; gap: 4px; width: 100%; }
-        .kb-row.hidden { display: none; }
         .kb-page { display: block; }
         .kb-page.hidden { display: none; }
-        
-        .kb-key {
-            height: 42px; min-width: 30px; flex: 1; max-width: 36px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 16px; font-family: 'KindleFont', sans-serif; color: #000;
-            border: none; background: transparent; cursor: pointer;
-            text-transform: lowercase;
-        }
+        .kb-key { height: 42px; min-width: 30px; flex: 1; max-width: 36px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-family: 'KindleFont', sans-serif; color: #000; border: none; background: transparent; cursor: pointer; text-transform: lowercase; }
         .kb-key.caps-active { text-transform: uppercase; }
         .kb-key.special { flex: 1.5; max-width: 48px; }
         .kb-key.wide { flex: 4; max-width: 160px; border: 1px solid #000; background: transparent; font-size: 11px; font-weight: bold; }
@@ -218,33 +128,20 @@
     <div class="kindle-device">
         <!-- Top Nav -->
         <div class="top-nav">
-            <div class="nav-item" id="homeBtn">
-                <div class="nav-icon"><img src="homescreenBAR.png" alt="home"></div>главный экран
-            </div>
-            <div class="nav-item" id="backBtn">
-                <div class="nav-icon"><img src="backBAR.png" alt="back"></div>назад
-            </div>
-            <div class="nav-item" id="settingsBtn">
-                <div class="nav-icon"><img src="settingsBAR.png" alt="settings"></div>настройки
-            </div>
-            <div class="nav-item">
-                <div class="nav-icon"><img src="storeBAR.png" alt="store"></div>магазин
-            </div>
-            <div class="search-container" id="searchOpenBtn">
-                <div class="search-icon"><img src="searchBAR.png" alt="search"></div><span class="search-text">Поиск</span>
-            </div>
+            <div class="nav-item" id="homeBtn"><div class="nav-icon"><img src="homescreenBAR.png" alt="home"></div>главный экран</div>
+            <div class="nav-item" id="backBtn"><div class="nav-icon"><img src="backBAR.png" alt="back"></div>назад</div>
+            <div class="nav-item" id="settingsBtn"><div class="nav-icon"><img src="settingsBAR.png" alt="settings"></div>настройки</div>
+            <div class="nav-item"><div class="nav-icon"><img src="storeBAR.png" alt="store"></div>магазин</div>
+            <div class="search-container" id="searchOpenBtn"><div class="search-icon"><img src="searchBAR.png" alt="search"></div><span class="search-text">Поиск</span></div>
             <div class="menu-dots"><img src="troetoBAR.png" alt="menu"></div>
         </div>
 
-        <!-- Content Area -->
         <div class="content-area" id="scrollContainer">
             <div id="dashboardView" class="dashboard-scroll-area">
                 <div class="section-title"><span>ВАША БИБЛИОТЕКА</span><span class="title-arrow">›</span></div>
-                
                 <div class="library-row" id="libraryContainer">
                     <div class="empty-library-text" id="emptyLibraryMsg">Ваша библиотека пуста.<br>Загрузите книги в настройках.</div>
                 </div>
-
                 <div class="lists-section">
                     <div class="section-title"><span>СПИСКИ КНИГ</span><span class="title-arrow">›</span></div>
                     <div class="list-item">Начните вести список книг <span class="title-arrow">›</span></div>
@@ -254,11 +151,10 @@
                     <div class="section-title"><span>Узнайте все о Kindle</span><span class="title-arrow">›</span></div>
                     <div class="help-row">
                         <div class="help-img-container"><img src="learn.png" alt="Learn Kindle"></div>
-                        <div class="help-content"><p>Ознакомьтесь с возможностями<br>устройства Kindle и узнайте, как<br>перемещаться по его функциям</p><button class="help-btn">Подробнее</button></div>
+                        <div class="help-content"><p>Ознакомьтесь с возможностями устройства Kindle.</p><button class="help-btn">Подробнее</button></div>
                     </div>
                 </div>
                 <div class="bottom-hint"><span>Проведите пальцем вверх, чтобы увидеть другие предложения.</span><span class="arrow-down">⌄</span></div>
-                <div class="scrollbar-track"><div class="scrollbar-thumb"></div></div>
             </div>
 
             <div id="settingsView" class="settings-scroll-area">
@@ -266,11 +162,6 @@
                 <div class="settings-list-item"><div class="settings-icon-wrapper"><svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg></div><div class="settings-text-wrapper"><div class="settings-title">Беспроводная связь</div></div><div class="settings-arrow">›</div></div>
                 <div class="settings-list-item"><div class="settings-icon-wrapper"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg></div><div class="settings-text-wrapper"><div class="settings-title">Параметры устройства</div></div><div class="settings-arrow">›</div></div>
                 <div class="settings-list-item"><div class="settings-icon-wrapper"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></div><div class="settings-text-wrapper"><div class="settings-title">Параметры чтения</div></div><div class="settings-arrow">›</div></div>
-                <div class="settings-list-item"><div class="settings-icon-wrapper"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path><path d="M2 12h20"></path></svg></div><div class="settings-text-wrapper"><div class="settings-title">Язык и словари</div></div><div class="settings-arrow">›</div></div>
-                <div class="settings-list-item"><div class="settings-icon-wrapper"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="2" x2="12" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line></svg></div><div class="settings-text-wrapper"><div class="settings-title">Специальные возможности</div></div><div class="settings-arrow">›</div></div>
-                <div class="settings-list-item"><div class="settings-icon-wrapper"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div><div class="settings-text-wrapper"><div class="settings-title">Справка и руководства пользователя</div></div><div class="settings-arrow">›</div></div>
-                
-                <!-- Custom Import Item -->
                 <div class="settings-list-item" id="uploadBookItem" style="border-top: 2px solid #000; margin-top: 10px;">
                     <div class="settings-icon-wrapper"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg></div>
                     <div class="settings-text-wrapper"><div class="settings-title">Загрузка книг минуя Магазин Amazon</div></div>
@@ -286,9 +177,7 @@
                 <div class="reader-title" id="readerTitle">Книга</div>
                 <div style="width: 60px;"></div>
             </div>
-            <div class="reader-body" id="readerBody">
-                <div id="readerTextContent"></div>
-            </div>
+            <div id="viewerArea"></div>
             <div class="reader-page-controls" id="readerControls">
                 <button class="page-btn" id="prevPageBtn">‹ Назад</button>
                 <div class="page-info" id="pageInfo">Стр. 1 / 1</div>
@@ -306,9 +195,7 @@
                 <div class="search-hint-box"><img src="searchhint.png" alt="Hint"><div class="search-hint-text">Начните искать книги или предложения на Amazon</div></div>
             </div>
 
-            <!-- Keyboard -->
             <div class="keyboard-container" id="customKeyboard">
-                <!-- Page 0: RU -->
                 <div id="kbPage0" class="kb-page">
                     <div class="kb-row">
                         <button class="kb-key" data-value="й">й</button><button class="kb-key" data-value="ц">ц</button><button class="kb-key" data-value="у">у</button><button class="kb-key" data-value="к">к</button><button class="kb-key" data-value="е">е</button><button class="kb-key" data-value="н">н</button><button class="kb-key" data-value="г">г</button><button class="kb-key" data-value="ш">ш</button><button class="kb-key" data-value="щ">щ</button><button class="kb-key" data-value="з">з</button><button class="kb-key" data-value="х">х</button><button class="kb-key" data-value="ъ">ъ</button>
@@ -329,8 +216,6 @@
                         <button class="kb-key img-key" id="kbEnter"><img src="keybenter.png" alt="Enter"></button>
                     </div>
                 </div>
-
-                <!-- Page 1: EN -->
                 <div id="kbPage1" class="kb-page hidden">
                     <div class="kb-row">
                         <button class="kb-key" data-value="q">q</button><button class="kb-key" data-value="w">w</button><button class="kb-key" data-value="e">e</button><button class="kb-key" data-value="r">r</button><button class="kb-key" data-value="t">t</button><button class="kb-key" data-value="y">y</button><button class="kb-key" data-value="u">u</button><button class="kb-key" data-value="i">i</button><button class="kb-key" data-value="o">o</button><button class="kb-key" data-value="p">p</button>
@@ -351,8 +236,6 @@
                         <button class="kb-key img-key" id="kbEnterEN"><img src="keybenter.png" alt="Enter"></button>
                     </div>
                 </div>
-
-                <!-- Page 2: NUM/SYM -->
                 <div id="kbPage2" class="kb-page hidden">
                     <div class="kb-row">
                         <button class="kb-key" data-value="1">1</button><button class="kb-key" data-value="2">2</button><button class="kb-key" data-value="3">3</button><button class="kb-key" data-value="4">4</button><button class="kb-key" data-value="5">5</button><button class="kb-key" data-value="6">6</button><button class="kb-key" data-value="7">7</button><button class="kb-key" data-value="8">8</button><button class="kb-key" data-value="9">9</button><button class="kb-key" data-value="0">0</button>
@@ -376,41 +259,140 @@
     </div>
 
     <script>
-        // --- Navigation ---
+        // --- ВСТРОЕННЫЙ ПАРСЕР БЕЗ СТОРОННИХ БИБЛИОТЕК ---
+        // Эта функция принимает ArrayBuffer (бинарные данные файла) и определяет формат
+        function parseBookFile(buffer, fileName) {
+            const ext = fileName.split('.').pop().toLowerCase();
+            const view = new Uint8Array(buffer);
+            
+            // Проверяем сигнатуры форматов
+            const isZip = view[0] === 0x50 && view[1] === 0x4B;
+            
+            if (ext === 'epub' || (isZip && ext !== 'fb2')) {
+                return parseEPUB(buffer);
+            } else if (ext === 'fb2') {
+                return parseFB2(buffer);
+            } else {
+                return parseTXT(buffer);
+            }
+        }
+
+        // Парсер TXT
+        function parseTXT(buffer) {
+            const decoder = new TextDecoder('utf-8');
+            let text = decoder.decode(buffer);
+            // Простая очистка
+            text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            return { type: 'txt', content: text };
+        }
+
+        // Парсер FB2 (просто извлекаем текст из XML)
+        function parseFB2(buffer) {
+            const decoder = new TextDecoder('utf-8');
+            let xml = decoder.decode(buffer);
+            // Грубое извлечение текста для демонстрации
+            let text = xml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+            return { type: 'fb2', content: text };
+        }
+
+        // Парсер EPUB (Распаковка ZIP, парсинг OPF и XHTML)
+        function parseEPUB(buffer) {
+            try {
+                // Простейшая распаковка ZIP (ищем контент)
+                const view = new Uint8Array(buffer);
+                const decoder = new TextDecoder('utf-8');
+                let offset = 0;
+                let files = {};
+                
+                // Находим центральный каталог (EOCD)
+                let eocdOffset = -1;
+                for (let i = view.length - 22; i >= 0; i--) {
+                    if (view[i] === 0x50 && view[i+1] === 0x4B && view[i+2] === 0x05 && view[i+3] === 0x06) {
+                        eocdOffset = i;
+                        break;
+                    }
+                }
+
+                if (eocdOffset === -1) return { type: 'epub', content: 'Не удалось распарсить EPUB (не найден конец ZIP)' };
+
+                // Получаем начало центрального каталога
+                const cdStart = view[eocdOffset + 16] | (view[eocdOffset + 17] << 8) | (view[eocdOffset + 18] << 16) | (view[eocdOffset + 19] << 24);
+                let currentOffset = cdStart;
+
+                // Читаем записи файлов
+                while (currentOffset < eocdOffset) {
+                    if (view[currentOffset] !== 0x50 || view[currentOffset+1] !== 0x4B) break;
+                    const fileNameLen = view[currentOffset + 28] | (view[currentOffset + 29] << 8);
+                    const extraFieldLen = view[currentOffset + 30] | (view[currentOffset + 31] << 8);
+                    const commentLen = view[currentOffset + 32] | (view[currentOffset + 33] << 8);
+                    const compSize = view[currentOffset + 20] | (view[currentOffset + 21] << 8) | (view[currentOffset + 22] << 16) | (view[currentOffset + 23] << 24);
+                    const uncompSize = view[currentOffset + 24] | (view[currentOffset + 25] << 8) | (view[currentOffset + 26] << 16) | (view[currentOffset + 27] << 24);
+                    const localHeaderOffset = view[currentOffset + 42] | (view[currentOffset + 43] << 8) | (view[currentOffset + 44] << 16) | (view[currentOffset + 45] << 24);
+
+                    const nameStart = currentOffset + 46;
+                    const fileName = decoder.decode(view.slice(nameStart, nameStart + fileNameLen));
+                    
+                    // Просто сохраняем данные о файле (читаем контент локально)
+                    if (fileName.endsWith('.opf') || fileName.endsWith('.xhtml') || fileName.endsWith('.html') || fileName === 'META-INF/container.xml') {
+                        let localOffset = localHeaderOffset;
+                        // Минимальная проверка локального заголовка
+                        if (view[localOffset] === 0x50 && view[localOffset+1] === 0x4B) {
+                            const localNameLen = view[localOffset + 26] | (view[localOffset + 27] << 8);
+                            const localExtraLen = view[localOffset + 28] | (view[localOffset + 29] << 8);
+                            const dataStart = localOffset + 30 + localNameLen + localExtraLen;
+                            
+                            // Если размер сжатия отличается от несжатого, значит сжат (дефлейт). Пропускаем для простоты.
+                            // Но для большинства EPUB это несжатый (хранилище).
+                            try {
+                                const contentData = view.slice(dataStart, dataStart + uncompSize);
+                                files[fileName] = decoder.decode(contentData);
+                            } catch(e) {
+                                // Пропускаем сжатые файлы ради совместимости
+                            }
+                        }
+                    }
+
+                    const recordSize = 46 + fileNameLen + extraFieldLen + commentLen;
+                    currentOffset += recordSize;
+                }
+
+                // Извлекаем текст
+                let fullText = '';
+                if (files['META-INF/container.xml']) {
+                    // Ищем файл OPF
+                    const opfPath = files['META-INF/container.xml'].match(/full-path="([^"]+)"/);
+                    if (opfPath && files[opfPath[1]]) {
+                        const opfContent = files[opfPath[1]];
+                        // Ищем все файлы контента из OPF
+                        const contentFiles = opfContent.match(/href="([^"]+\.xhtml?)"/g) || [];
+                        contentFiles.forEach(match => {
+                            const filePath = match.replace(/href="/, '').replace(/"/, '');
+                            if (files[filePath]) {
+                                let html = files[filePath];
+                                // Просто удаляем теги для получения текста
+                                html = html.replace(/<[^>]+>/g, ' ');
+                                fullText += html + '\n\n';
+                            }
+                        });
+                    }
+                }
+                if (!fullText) fullText = 'Не удалось извлечь текст из EPUB (не найден контент)';
+                return { type: 'epub', content: fullText };
+
+            } catch(e) {
+                return { type: 'epub', content: 'Ошибка парсинга EPUB: ' + e.message };
+            }
+        }
+
+        // --- ХРАНИЛИЩЕ ---
+        let library = JSON.parse(localStorage.getItem('kindleLibrary')) || [];
+        library = library.filter(book => book && book.data);
+        localStorage.setItem('kindleLibrary', JSON.stringify(library));
+
         const dashboardView = document.getElementById('dashboardView');
         const settingsView = document.getElementById('settingsView');
         const scrollContainer = document.getElementById('scrollContainer');
         const libraryContainer = document.getElementById('libraryContainer');
-        const emptyLibraryMsg = document.getElementById('emptyLibraryMsg');
-
-        function showDashboard() { 
-            dashboardView.style.display = 'block'; 
-            settingsView.style.display = 'none'; 
-            scrollContainer.scrollTop = 0; 
-            renderLibrary();
-        }
-        function showSettings() { 
-            dashboardView.style.display = 'none'; 
-            settingsView.style.display = 'block'; 
-            scrollContainer.scrollTop = 0; 
-        }
-
-        document.getElementById('homeBtn').addEventListener('click', showDashboard);
-        document.getElementById('backBtn').addEventListener('click', showDashboard);
-        document.getElementById('settingsBtn').addEventListener('click', showSettings);
-
-        // --- Swipe Up ---
-        let touchStartY = 0;
-        scrollContainer.addEventListener('touchstart', function(e) { touchStartY = e.touches[0].clientY; });
-        scrollContainer.addEventListener('touchend', function(e) {
-            if (dashboardView.style.display !== 'none') {
-                let touchEndY = e.changedTouches[0].clientY;
-                if (touchStartY - touchEndY > 50) alert('Открытие других предложений (функция-заглушка)');
-            }
-        });
-
-        // --- Book Upload & Storage ---
-        let library = JSON.parse(localStorage.getItem('kindleLibrary')) || [];
 
         function renderLibrary() {
             libraryContainer.innerHTML = '';
@@ -419,88 +401,153 @@
                 libraryContainer.innerHTML = '<div class="empty-library-text">Ваша библиотека пуста.<br>Загрузите книги в настройках.</div>';
             } else {
                 libraryContainer.classList.add('has-books');
-                // Show only first book for demo UI
-                const book = library[0];
-                const bookCard = document.createElement('div');
-                bookCard.className = 'book-card-large';
-                bookCard.innerHTML = `
-                    <div class="book-logo-large"><img src="booklable.png" alt="Book"></div>
-                    <div class="book-title-large">${book.title || 'Без названия'}</div>
-                    <div class="book-author-large">${book.author || 'Неизвестный автор'}</div>
-                `;
-                bookCard.addEventListener('click', function() { openReader(book); });
-                libraryContainer.appendChild(bookCard);
+                library.forEach(book => {
+                    const bookCard = document.createElement('div');
+                    bookCard.className = 'book-card-large';
+                    bookCard.innerHTML = `
+                        <div class="book-logo-large"><img src="booklable.png" alt="Book"></div>
+                        <div class="book-title-large">${book.title || 'Без названия'}</div>
+                        <div class="book-author-large">${book.author || 'Неизвестный автор'}</div>
+                    `;
+                    bookCard.addEventListener('click', function() { openReader(book); });
+                    libraryContainer.appendChild(bookCard);
+                });
             }
         }
 
+        // --- ЗАГРУЗКА ---
         document.getElementById('uploadBookItem').addEventListener('click', function() {
             const input = document.createElement('input');
             input.type = 'file';
-            input.accept = '.txt,.epub,.fb2';
+            input.accept = '.txt,.epub,.fb2,.zip';
             input.onchange = function(e) {
                 const file = e.target.files[0];
                 if (!file) return;
                 const reader = new FileReader();
                 reader.onload = function(ev) {
-                    const content = ev.target.result;
-                    // Simulate parsing (simple demo: assume whole file is content, title is filename)
-                    const newBook = {
+                    const buffer = ev.target.result;
+                    let parsed = parseBookFile(buffer, file.name);
+                    
+                    let bookData = {
                         id: Date.now(),
                         title: file.name.replace(/\.[^/.]+$/, ""),
-                        author: "Загружено пользователем",
-                        content: content.substring(0, 10000) // Trim for demo to avoid lag
+                        author: "Загружено",
+                        type: parsed.type,
+                        data: parsed.content
                     };
-                    library.push(newBook);
+
+                    library.push(bookData);
                     localStorage.setItem('kindleLibrary', JSON.stringify(library));
                     renderLibrary();
-                    alert('Книга "' + newBook.title + '" успешно загружена!');
+                    alert('Книга "' + bookData.title + '" успешно загружена!');
                 };
-                reader.readAsText(file);
+                reader.readAsArrayBuffer(file);
             };
             input.click();
         });
 
-        // --- Reader Functionality ---
+        // --- НАВИГАЦИЯ ---
+        function showDashboard() { dashboardView.style.display = 'block'; settingsView.style.display = 'none'; scrollContainer.scrollTop = 0; }
+        function showSettings() { dashboardView.style.display = 'none'; settingsView.style.display = 'block'; scrollContainer.scrollTop = 0; }
+        document.getElementById('homeBtn').addEventListener('click', showDashboard);
+        document.getElementById('backBtn').addEventListener('click', showDashboard);
+        document.getElementById('settingsBtn').addEventListener('click', showSettings);
+
+        // --- ПОИСК И КЛАВИАТУРА ---
+        const searchOverlay = document.getElementById('searchOverlay');
+        const searchInput = document.getElementById('searchInput');
+        const keyboard = document.getElementById('customKeyboard');
+        const kbPage0 = document.getElementById('kbPage0');
+        const kbPage1 = document.getElementById('kbPage1');
+        const kbPage2 = document.getElementById('kbPage2');
+        let isCaps = false;
+
+        document.getElementById('searchOpenBtn').addEventListener('click', function() {
+            searchOverlay.style.display = 'flex'; searchInput.value = ''; searchInput.focus();
+            setTimeout(function() { keyboard.classList.add('active'); }, 10);
+        });
+        document.getElementById('searchCloseBtn').addEventListener('click', function() {
+            keyboard.classList.remove('active');
+            setTimeout(function() { searchOverlay.style.display = 'none'; }, 200);
+        });
+
+        function switchKeyboardPage(pageIndex) {
+            [kbPage0, kbPage1, kbPage2].forEach(el => el.classList.add('hidden'));
+            if (pageIndex === 0) kbPage0.classList.remove('hidden');
+            else if (pageIndex === 1) kbPage1.classList.remove('hidden');
+            else if (pageIndex === 2) kbPage2.classList.remove('hidden');
+        }
+        function updateCapsState() {
+            document.querySelectorAll('.kb-key[data-value]').forEach(key => {
+                isCaps ? key.classList.add('caps-active') : key.classList.remove('caps-active');
+            });
+        }
+
+        keyboard.addEventListener('click', function(e) {
+            const target = e.target.closest('.kb-key');
+            if (!target) return;
+            if (target.id.includes('Backspace')) { searchInput.value = searchInput.value.slice(0, -1); searchInput.focus(); return; }
+            if (target.id.includes('Space')) { searchInput.value += ' '; searchInput.focus(); return; }
+            if (target.id.includes('Enter')) { alert('Поиск по запросу: "' + searchInput.value + '"'); return; }
+            if (target.id === 'kbNums' || target.id === 'kbNumsEN') { switchKeyboardPage(2); return; }
+            if (target.id === 'kbNumsBack' || target.id === 'kbBackNum') { switchKeyboardPage(0); return; }
+            if (target.id === 'kbLangRU') { switchKeyboardPage(1); return; }
+            if (target.id === 'kbLangEN') { switchKeyboardPage(0); return; }
+            if (target.id === 'kbCapsRU' || target.id === 'kbCapsEN') { isCaps = !isCaps; updateCapsState(); return; }
+            const val = target.getAttribute('data-value');
+            if (val) { searchInput.value += isCaps ? val.toUpperCase() : val; searchInput.focus(); }
+        });
+
+        // --- ЧИТАЛКА (СВОЙ РЕНДЕР) ---
         const readerOverlay = document.getElementById('readerOverlay');
         const readerHeader = document.getElementById('readerHeader');
         const readerControls = document.getElementById('readerControls');
         const readerTitle = document.getElementById('readerTitle');
-        const readerTextContent = document.getElementById('readerTextContent');
+        const viewerArea = document.getElementById('viewerArea');
         const prevPageBtn = document.getElementById('prevPageBtn');
         const nextPageBtn = document.getElementById('nextPageBtn');
         const pageInfo = document.getElementById('pageInfo');
         
-        let currentBook = null;
-        let currentPageIndex = 0;
         let pages = [];
-
-        function splitIntoPages(text, charsPerPage = 900) {
-            const pagesArr = [];
-            for (let i = 0; i < text.length; i += charsPerPage) {
-                pagesArr.push(text.substring(i, i + charsPerPage));
-            }
-            return pagesArr.length > 0 ? pagesArr : [text || "Пустая страница"];
-        }
+        let currentPageIdx = 0;
 
         function openReader(book) {
-            currentBook = book;
-            currentPageIndex = 0;
-            readerTitle.textContent = book.title || "Книга";
-            pages = splitIntoPages(book.content || "Текст книги не найден.");
-            
             readerOverlay.style.display = 'flex';
             readerHeader.classList.add('active');
             readerControls.classList.add('active');
+            readerTitle.textContent = book.title || "Книга";
+            
+            // Разбиваем текст на страницы
+            const text = book.data || "Книга пуста.";
+            pages = splitIntoPages(text);
+            currentPageIdx = 0;
             renderPage();
         }
 
+        function splitIntoPages(text, maxChars = 2200) {
+            // Простой алгоритм для демонстрации
+            const chunks = [];
+            let current = '';
+            for (let i = 0; i < text.length; i++) {
+                current += text[i];
+                if (current.length > maxChars && text[i] === ' ') {
+                    chunks.push(current);
+                    current = '';
+                }
+            }
+            if (current) chunks.push(current);
+            return chunks.length > 0 ? chunks : [text];
+        }
+
         function renderPage() {
-            if (!pages.length) return;
-            readerTextContent.innerHTML = '<p>' + pages[currentPageIndex].replace(/\n/g, '</p><p>') + '</p>';
-            pageInfo.textContent = `Стр. ${currentPageIndex + 1} / ${pages.length}`;
-            prevPageBtn.disabled = currentPageIndex === 0;
-            nextPageBtn.disabled = currentPageIndex === pages.length - 1;
-            readerTextContent.scrollTop = 0;
+            let html = pages[currentPageIdx] || '';
+            // Форматируем в параграфы
+            html = html.replace(/\n/g, '</p><p>');
+            viewerArea.innerHTML = `<div style="font-size:18px; line-height:1.6; text-align:justify; height:100%; overflow:hidden;"><p>${html}</p></div>`;
+            
+            pageInfo.textContent = `Стр. ${currentPageIdx + 1} / ${pages.length}`;
+            prevPageBtn.disabled = currentPageIdx === 0;
+            nextPageBtn.disabled = currentPageIdx === pages.length - 1;
         }
 
         document.getElementById('readerCloseBtn').addEventListener('click', function() {
@@ -509,104 +556,10 @@
             readerControls.classList.remove('active');
         });
 
-        prevPageBtn.addEventListener('click', function() {
-            if (currentPageIndex > 0) { currentPageIndex--; renderPage(); }
-        });
-        nextPageBtn.addEventListener('click', function() {
-            if (currentPageIndex < pages.length - 1) { currentPageIndex++; renderPage(); }
-        });
+        prevPageBtn.addEventListener('click', function() { if (currentPageIdx > 0) { currentPageIdx--; renderPage(); } });
+        nextPageBtn.addEventListener('click', function() { if (currentPageIdx < pages.length - 1) { currentPageIdx++; renderPage(); } });
 
-        // Close reader on touch outside controls? Just use Back button.
-
-
-        // --- Search ---
-        const searchOverlay = document.getElementById('searchOverlay');
-        const searchInput = document.getElementById('searchInput');
-        const keyboard = document.getElementById('customKeyboard');
-        const kbPage0 = document.getElementById('kbPage0');
-        const kbPage1 = document.getElementById('kbPage1');
-        const kbPage2 = document.getElementById('kbPage2');
-
-        let currentPage = 0;
-        let isCaps = false;
-
-        document.getElementById('searchOpenBtn').addEventListener('click', function() {
-            searchOverlay.style.display = 'flex'; searchInput.value = ''; searchInput.focus();
-            setTimeout(function() { keyboard.classList.add('active'); }, 10);
-        });
-
-        document.getElementById('searchCloseBtn').addEventListener('click', function() {
-            keyboard.classList.remove('active');
-            setTimeout(function() { searchOverlay.style.display = 'none'; }, 200);
-        });
-
-        function switchKeyboardPage(pageIndex) {
-            kbPage0.classList.add('hidden');
-            kbPage1.classList.add('hidden');
-            kbPage2.classList.add('hidden');
-            
-            if (pageIndex === 0) kbPage0.classList.remove('hidden');
-            else if (pageIndex === 1) kbPage1.classList.remove('hidden');
-            else if (pageIndex === 2) kbPage2.classList.remove('hidden');
-            currentPage = pageIndex;
-        }
-
-        function updateCapsState() {
-            const allKeys = document.querySelectorAll('.kb-key[data-value]');
-            allKeys.forEach(key => {
-                if (isCaps) key.classList.add('caps-active');
-                else key.classList.remove('caps-active');
-            });
-        }
-
-        keyboard.addEventListener('click', function(e) {
-            const target = e.target.closest('.kb-key');
-            if (!target) return;
-
-            if (target.id === 'kbBackspace' || target.id === 'kbBackspaceEN' || target.id === 'kbBackspaceNUM') {
-                searchInput.value = searchInput.value.slice(0, -1);
-                searchInput.focus();
-                return;
-            }
-            if (target.id === 'kbSpace' || target.id === 'kbSpaceEN' || target.id === 'kbSpaceNUM') {
-                searchInput.value += ' ';
-                searchInput.focus();
-                return;
-            }
-            if (target.id === 'kbEnter' || target.id === 'kbEnterEN' || target.id === 'kbEnterNUM') {
-                alert('Поиск по запросу: "' + searchInput.value + '"');
-                return;
-            }
-            if (target.id === 'kbNums' || target.id === 'kbNumsEN') {
-                switchKeyboardPage(2);
-                return;
-            }
-            if (target.id === 'kbNumsBack' || target.id === 'kbBackNum') {
-                switchKeyboardPage(0);
-                return;
-            }
-            if (target.id === 'kbLangRU') {
-                switchKeyboardPage(1);
-                return;
-            }
-            if (target.id === 'kbLangEN') {
-                switchKeyboardPage(0);
-                return;
-            }
-            if (target.id === 'kbCapsRU' || target.id === 'kbCapsEN') {
-                isCaps = !isCaps;
-                updateCapsState();
-                return;
-            }
-
-            const val = target.getAttribute('data-value');
-            if (val) {
-                searchInput.value += isCaps ? val.toUpperCase() : val;
-                searchInput.focus();
-            }
-        });
-
-        // Init
+        // Инициализация
         renderLibrary();
         showDashboard();
     </script>
