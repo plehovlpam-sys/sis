@@ -73,13 +73,74 @@
         }
         .tux img {
             display: block;
-            width: 64px;  /* <--- РЕГУЛИРОВОЧНОЕ ЗНАЧЕНИЕ РАЗМЕРА TUX */
+            width: 64px;
             height: auto;
+        }
+
+        /* ===== ФИНАЛЬНЫЙ ЭКРАН ===== */
+        .final-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 20;
+            pointer-events: none;
+            user-select: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            background: #ffffff;
+        }
+        .final-screen.show {
+            opacity: 1;
+        }
+
+        .final-bootstraplogo {
+            position: absolute;
+            top: 15%;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+        .final-bootstraplogo img {
+            display: block;
+            max-width: 200px;
+            height: auto;
+            margin: 0 auto;
+        }
+
+        .final-load {
+            position: absolute;
+            top: calc(15% + 80px);
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+        .final-load img {
+            display: block;
+            max-width: 120px;
+            height: auto;
+            margin: 0 auto;
+        }
+
+        .final-downthere {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+        .final-downthere img {
+            display: block;
+            max-width: 150px;
+            height: auto;
+            margin: 0 auto;
         }
     </style>
 </head>
 <body>
 <div class="screen" id="screen">
+    <!-- Основные элементы -->
     <div class="logo" id="logoContainer">
         <img src="logokindle.png" alt="Kindle" id="logoImg">
     </div>
@@ -87,6 +148,19 @@
         <img src="tux.png" alt="Tux">
     </div>
     <canvas id="log"></canvas>
+
+    <!-- Финальный экран -->
+    <div class="final-screen" id="finalScreen">
+        <div class="final-bootstraplogo">
+            <img src="bootstraplogo.jpg" alt="Bootstrap Logo">
+        </div>
+        <div class="final-load" id="loadContainer">
+            <img src="load1.png" alt="Loading" id="loadImg">
+        </div>
+        <div class="final-downthere">
+            <img src="downthere.jpg" alt="Down There">
+        </div>
+    </div>
 </div>
 
 <script>
@@ -216,6 +290,8 @@
     const logoContainer = document.getElementById('logoContainer');
     const logoImg = document.getElementById('logoImg');
     const tuxContainer = document.getElementById('tuxContainer');
+    const finalScreen = document.getElementById('finalScreen');
+    const loadImg = document.getElementById('loadImg');
 
     canvas.width = TERM_COLS * CHAR_W;
     canvas.height = TERM_ROWS * CHAR_H;
@@ -307,7 +383,57 @@
     }
 
     // ============================================================
-    // 10. ОСНОВНАЯ ЛОГИКА ЗАГРУЗКИ
+    // 10. АНИМАЦИЯ LOAD (СЛУЧАЙНАЯ СМЕНА)
+    // ============================================================
+    let loadInterval = null;
+
+    function startLoadAnimation() {
+        // Функция смены изображения
+        function changeLoadImage() {
+            const randomNum = Math.floor(Math.random() * 7) + 1; // 1-7
+            loadImg.src = `load${randomNum}.png`;
+        }
+
+        // Меняем сразу
+        changeLoadImage();
+
+        // Запускаем интервал со случайной задержкой 1-5 секунд
+        function scheduleNext() {
+            const delay = (Math.random() * 4000) + 1000; // 1-5 секунд в мс
+            loadInterval = setTimeout(() => {
+                changeLoadImage();
+                scheduleNext();
+            }, delay);
+        }
+        scheduleNext();
+    }
+
+    function stopLoadAnimation() {
+        if (loadInterval) {
+            clearTimeout(loadInterval);
+            loadInterval = null;
+        }
+    }
+
+    // ============================================================
+    // 11. ПОКАЗ ФИНАЛЬНОГО ЭКРАНА
+    // ============================================================
+    function showFinalScreen() {
+        // Скрываем всё лишнее
+        logoContainer.classList.remove('show');
+        logoContainer.classList.remove('big');
+        tuxContainer.classList.remove('show');
+        canvas.style.opacity = '0';
+        
+        // Показываем финальный экран
+        finalScreen.classList.add('show');
+        
+        // Запускаем анимацию load
+        startLoadAnimation();
+    }
+
+    // ============================================================
+    // 12. ОСНОВНАЯ ЛОГИКА ЗАГРУЗКИ
     // ============================================================
     let bootSequenceRunning = false;
 
@@ -315,6 +441,10 @@
         if (bootSequenceRunning) return;
         bootSequenceRunning = true;
         isBootComplete = false;
+
+        // Скрываем финальный экран
+        finalScreen.classList.remove('show');
+        stopLoadAnimation();
 
         // --- ШАГ 1: Белый фон, ничего нет, ждём 2.5 секунды ---
         screen.style.background = '#ffffff';
@@ -369,22 +499,14 @@
             }, 100);
         });
 
-        // --- ШАГ 11: Мгновенно убираем логи ---
-        canvas.style.opacity = '0';
-        
-        // --- ШАГ 12: Увеличиваем логотип (мгновенно, без анимации) ---
-        logoContainer.classList.add('big');
-
-        // --- ШАГ 13: Чёрное моргание (0.01s) ---
-        screen.style.background = '#000000';
-        await new Promise(resolve => setTimeout(resolve, 10));
-        screen.style.background = '#ffffff';
+        // --- ШАГ 11: Показываем финальный экран ---
+        showFinalScreen();
         
         bootSequenceRunning = false;
     }
 
     // ============================================================
-    // 11. ЗАПУСК
+    // 13. ЗАПУСК
     // ============================================================
     function start() {
         buildCharMap();
@@ -409,7 +531,7 @@
     }
 
     // ============================================================
-    // 12. ПЕРЕЗАПУСК ПО КЛИКУ
+    // 14. ПЕРЕЗАПУСК ПО КЛИКУ
     // ============================================================
     document.addEventListener('click', function() {
         if (!bootSequenceRunning) {
@@ -418,7 +540,7 @@
     });
 
     // ============================================================
-    // 13. ПЕРЕСЧЁТ МАСШТАБА
+    // 15. ПЕРЕСЧЁТ МАСШТАБА
     // ============================================================
     window.addEventListener('resize', fitCanvas);
     window.addEventListener('orientationchange', function() {
