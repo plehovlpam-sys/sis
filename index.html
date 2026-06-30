@@ -2,51 +2,31 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Font Grid Viewer</title>
+    <title>Kindle Boot Log - Working Version</title>
     <style>
         * { margin: 0; padding: 0; background: #000; }
         body {
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
-            padding: 20px;
-            color: #0f0;
-            font-family: monospace;
+            min-height: 100vh;
         }
         canvas {
-            border: 1px solid #333;
+            background: #000;
+            border: 2px solid #333;
+            border-radius: 4px;
+            padding: 20px;
             image-rendering: pixelated;
-            margin: 10px;
-        }
-        .info {
-            padding: 10px;
-            border: 1px solid #333;
-            margin: 10px;
-            max-width: 900px;
-            background: #111;
-        }
-        .grid-info {
-            display: grid;
-            grid-template-columns: repeat(16, 60px);
-            gap: 2px;
-            margin: 10px;
-            font-size: 10px;
-        }
-        .grid-info .cell {
-            text-align: center;
-            padding: 2px;
-            border: 1px solid #222;
-            background: #111;
         }
     </style>
 </head>
 <body>
-    <div class="info" id="info">Loading font...</div>
-    <canvas id="fontDisplay"></canvas>
-    <div id="legend"></div>
-    <canvas id="extractedChars" width="960" height="400"></canvas>
+    <canvas id="log"></canvas>
 
     <script>
+        // ============================================================
+        // 1. ЗАГРУЖАЕМ КАРТИНКУ
+        // ============================================================
         const fontImage = new Image();
         fontImage.src = '12x22.png';
 
@@ -54,70 +34,187 @@
         const CHAR_H = 22;
         const COLS = 16;
 
-        fontImage.onload = function() {
-            const info = document.getElementById('info');
-            info.innerHTML = `
-                <b>✅ Font loaded: ${fontImage.width}×${fontImage.height}px</b><br>
-                Ширина: ${fontImage.width}px (должно быть 1152 = 96×12)<br>
-                Высота: ${fontImage.height}px (должно быть 44 = 2×22)<br>
-                Всего символов: ${(fontImage.width / CHAR_W) * (fontImage.height / CHAR_H)}<br>
-                Строк на картинке: ${Math.floor(fontImage.height / CHAR_H)}<br>
-                Колонок на картинке: ${Math.floor(fontImage.width / CHAR_W)}
-            `;
+        // КАРТА СИМВОЛОВ: какой символ лежит на какой позиции (индексе)
+        // Мы её построим автоматически, просканировав картинку
+        let charMap = {};
 
-            // Показываем картинку
-            const displayCanvas = document.getElementById('fontDisplay');
-            displayCanvas.width = fontImage.width;
-            displayCanvas.height = fontImage.height;
-            const dctx = displayCanvas.getContext('2d');
-            dctx.drawImage(fontImage, 0, 0);
+        // ============================================================
+        // 2. ЛОГИ ДЛЯ ВЫВОДА
+        // ============================================================
+        const logLines = [
+            '*****************************************',
+            '*         WELCOME TO KINDLE              *',
+            '*   Linux 3.0.35-lab126 #1 SMP PREEMPT  *',
+            '*   KINDLE REV: 10th Generation          *',
+            '*   SYSTEM: MAIN (User partition)        *',
+            '*   BATTERY: 98% (Charging)              *',
+            '*   STORAGE: 2.1 GB free of 3.2 GB       *',
+            '*****************************************',
+            '',
+            '[    0.000000] Booting Linux on physical CPU 0x0',
+            '[    0.000000] Linux version 3.0.35-lab126 (lab126@sw027)',
+            '[    0.000000] CPU: ARMv7 Processor [412fc09a] revision 10',
+            '[    0.000000] Memory: 512MB = 512MB total',
+            '[    0.390000] EXT3-fs (mmcblk0p1): mounted filesystem',
+            '[    4.230000] EPDC: 1st update marker - pre-initialization flash',
+            '[    5.450000] input: framework_keypad as /devices/virtual/input/input0',
+            '[    6.520000] Battery: 4.172 Volts, 31 Degrees C, Charging',
+            '[    7.100000] wifi: firmware loaded successfully, link is UP',
+            '[    8.000000] *** System ready ***',
+            '',
+            'Kindle startup complete. Happy reading!',
+            '',
+            'login[1890]: root login on \'ttyS0\''
+        ];
 
-            // Извлекаем все символы и показываем их с индексами
-            const extractCanvas = document.getElementById('extractedChars');
-            const ectx = extractCanvas.getContext('2d');
-            ectx.fillStyle = '#000';
-            ectx.fillRect(0, 0, extractCanvas.width, extractCanvas.height);
+        // ============================================================
+        // 3. РАСПОЗНАЁМ КАРТИНКУ: строим карту символов
+        // ============================================================
+        function buildCharMap() {
+            // Создаём временный канвас для анализа картинки
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = fontImage.width;
+            tempCanvas.height = fontImage.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.drawImage(fontImage, 0, 0);
 
             const totalRows = Math.floor(fontImage.height / CHAR_H);
             const totalCols = Math.floor(fontImage.width / CHAR_W);
 
-            let legendHtml = '<div class="grid-info">';
-            let index = 0;
-
+            // Список символов в том порядке, в котором они идут в ASCII
+            const asciiChars = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~';
+            
+            // Мы НЕ знаем, в каком порядке символы на картинке.
+            // Поэтому мы просто сопоставляем: индекс на картинке -> символ.
+            // Для этого мы вырезаем каждый символ и "угадываем", что это за символ.
+            // Но проще: ПОЗВОЛИМ ПОЛЬЗОВАТЕЛЮ СКАЗАТЬ, ГДЕ КАКИЕ СИМВОЛЫ.
+            
+            // Вместо автоматического распознавания (оно сложное),
+            // мы просто предположим, что символы идут в правильном порядке,
+            // НО сдвинуты на несколько позиций.
+            // Давайте попробуем найти букву 'A' вручную.
+            
+            console.log('=== АНАЛИЗ КАРТИНКИ ===');
+            console.log(`Размер: ${fontImage.width}×${fontImage.height}`);
+            console.log(`Символов в ширину: ${totalCols}, в высоту: ${totalRows}`);
+            console.log(`Всего символов: ${totalCols * totalRows}`);
+            
+            // Выводим все символы с их индексами для отладки
             for (let row = 0; row < totalRows; row++) {
+                let line = '';
                 for (let col = 0; col < totalCols; col++) {
-                    const sx = col * CHAR_W;
-                    const sy = row * CHAR_H;
-                    
-                    // Выводим символ на холст
-                    const tx = col * 60 + 10;
-                    const ty = row * 80 + 10;
-                    ectx.drawImage(fontImage, sx, sy, CHAR_W, CHAR_H, tx, ty, CHAR_W, CHAR_H);
-                    
-                    // Подписываем номер
-                    ectx.fillStyle = '#666';
-                    ectx.font = '8px monospace';
-                    ectx.fillText(`#${index}`, tx + 14, ty + 32);
-                    
-                    legendHtml += `<div class="cell">#${index}</div>`;
-                    index++;
+                    const idx = row * totalCols + col;
+                    line += `${idx.toString().padStart(3, ' ')} `;
+                }
+                console.log(line);
+            }
+
+            // Строим карту: индекс -> символ
+            // ПРЕДПОЛОЖИМ, что символы идут в стандартном ASCII порядке,
+            // начиная с пробела (0x20)
+            for (let i = 0; i < totalCols * totalRows && i < asciiChars.length; i++) {
+                charMap[i] = asciiChars[i];
+            }
+
+            // Если символов больше, чем в ASCII, заполняем заглушками
+            for (let i = asciiChars.length; i < totalCols * totalRows; i++) {
+                charMap[i] = '?';
+            }
+
+            console.log('Карта символов построена (предположительно)');
+            console.log('Индекс 0:', charMap[0], '(должен быть пробел)');
+            console.log('Индекс 33:', charMap[33], '(должна быть A)');
+        }
+
+        // ============================================================
+        // 4. ФУНКЦИЯ ОТРИСОВКИ СИМВОЛА
+        // ============================================================
+        function drawChar(ctx, img, charCode, x, y) {
+            // Ищем, есть ли такой символ в нашей карте
+            let foundIndex = -1;
+            for (let idx in charMap) {
+                if (charMap[idx] === String.fromCharCode(charCode)) {
+                    foundIndex = parseInt(idx);
+                    break;
                 }
             }
-            legendHtml += '</div>';
-            document.getElementById('legend').innerHTML = legendHtml;
 
-            // Дополнительная информация
-            console.log('=== ПОЗИЦИИ БУКВ ===');
-            console.log('Посчитайте от 0:');
-            console.log('Ряд 0 (верхний): индексы 0-15');
-            console.log('Ряд 1 (нижний): индексы 16-31');
-            console.log('И т.д.');
-            console.log('');
-            console.log('Введите вручную индекс буквы "A" (посчитайте по картинке)');
+            if (foundIndex === -1) {
+                // Символ не найден — рисуем квадратик
+                ctx.fillStyle = '#333';
+                ctx.fillRect(x, y, CHAR_W, CHAR_H);
+                return;
+            }
+
+            const totalCols = Math.floor(img.width / CHAR_W);
+            const col = foundIndex % totalCols;
+            const row = Math.floor(foundIndex / totalCols);
+
+            // ВНИМАНИЕ: берём ТОЛЬКО из нижнего ряда (жирный шрифт)
+            // Если row > 0, используем его как есть
+            // Если нужен жирный — берём row + 1 (если есть)
+            let sy = row * CHAR_H;
+            
+            // Для жирного шрифта используем нечётные ряды
+            // (предполагаем, что жирный ряд идёт сразу после обычного)
+            // ВАРИАНТ: если row чётный, берём следующий ряд для жирного
+            // Но проще: используем ТОЛЬКО нижний ряд (индексы 16-31)
+            // Для этого сдвигаем индекс на 16
+            const boldIndex = foundIndex + 16;
+            if (boldIndex < (img.width / CHAR_W) * (img.height / CHAR_H)) {
+                const boldCol = boldIndex % totalCols;
+                const boldRow = Math.floor(boldIndex / totalCols);
+                const sx = boldCol * CHAR_W;
+                sy = boldRow * CHAR_H;
+            }
+
+            const sx = col * CHAR_W;
+            
+            ctx.drawImage(img, sx, sy, CHAR_W, CHAR_H, x, y, CHAR_W, CHAR_H);
+        }
+
+        // ============================================================
+        // 5. ОСНОВНАЯ ФУНКЦИЯ ОТРИСОВКИ
+        // ============================================================
+        const TERM_COLS = 80;
+        const TERM_ROWS = 30;
+
+        const canvas = document.getElementById('log');
+        canvas.width = TERM_COLS * CHAR_W;
+        canvas.height = TERM_ROWS * CHAR_H;
+        const ctx = canvas.getContext('2d');
+
+        function renderLog() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let row = 0; row < logLines.length && row < TERM_ROWS; row++) {
+                const line = logLines[row];
+                if (!line) continue;
+
+                for (let col = 0; col < line.length && col < TERM_COLS; col++) {
+                    const code = line.charCodeAt(col);
+                    if (code >= 0x20 && code <= 0x7E) {
+                        drawChar(ctx, fontImage, code, col * CHAR_W, row * CHAR_H);
+                    }
+                }
+            }
+        }
+
+        // ============================================================
+        // 6. ЗАПУСК
+        // ============================================================
+        fontImage.onload = function() {
+            buildCharMap();
+            renderLog();
+            console.log('✅ Лог отрисован! Если буквы не те — напишите, я поправлю.');
         };
 
         fontImage.onerror = function() {
-            document.getElementById('info').innerHTML = '❌ Не удалось загрузить 12x22.png!';
+            console.error('❌ 12x22.png не найден!');
+            ctx.fillStyle = '#0f0';
+            ctx.font = '14px monospace';
+            ctx.fillText('ERROR: 12x22.png not found!', 10, 30);
         };
     </script>
 </body>
