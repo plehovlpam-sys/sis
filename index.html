@@ -2,15 +2,20 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Kindle Boot</title>
     <style>
-        * { margin: 0; padding: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #ffffff;
+        }
         body {
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            background: #ffffff;
         }
         .screen {
             position: relative;
@@ -30,7 +35,7 @@
         }
         .logo img {
             display: block;
-            max-width: 180px;
+            max-width: 120px;
             height: auto;
         }
         #log {
@@ -103,21 +108,12 @@
         const totalCols = Math.floor(fontImage.width / CHAR_W);
         const asciiChars = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~';
         
-        console.log('=== АНАЛИЗ КАРТИНКИ ===');
-        console.log(`Размер: ${fontImage.width}×${fontImage.height}`);
-        console.log(`Символов в ширину: ${totalCols}, в высоту: ${totalRows}`);
-        console.log(`Всего символов: ${totalCols * totalRows}`);
-        
         for (let i = 0; i < totalCols * totalRows && i < asciiChars.length; i++) {
             charMap[i] = asciiChars[i];
         }
         for (let i = asciiChars.length; i < totalCols * totalRows; i++) {
             charMap[i] = '?';
         }
-
-        console.log('Карта символов построена');
-        console.log('Индекс 0:', charMap[0], '(должен быть пробел)');
-        console.log('Индекс 33:', charMap[33], '(должна быть A)');
     }
 
     // ============================================================
@@ -165,6 +161,7 @@
     const canvas = document.getElementById('log');
     const ctx = canvas.getContext('2d');
 
+    // ФИКСИРОВАННЫЙ РАЗМЕР (шрифт остаётся 12×22 пикселя)
     canvas.width = TERM_COLS * CHAR_W;
     canvas.height = TERM_ROWS * CHAR_H;
 
@@ -173,7 +170,34 @@
     canvas.style.left = '0';
 
     // ============================================================
-    // 6. ПОСТРОЧНЫЙ ВЫВОД
+    // 6. АДАПТАЦИЯ ПОД МОБИЛКИ — МАСШТАБИРУЕМ КАНВАС
+    // ============================================================
+    function fitCanvas() {
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+        
+        // Реальный размер канваса в пикселях
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        
+        // Вычисляем масштаб, чтобы влезло по ширине и высоте
+        const scaleX = screenWidth / canvasWidth;
+        const scaleY = screenHeight / canvasHeight;
+        const scale = Math.min(scaleX, scaleY);
+        
+        // Применяем масштаб
+        canvas.style.transform = `scale(${scale})`;
+        canvas.style.transformOrigin = 'top left';
+        
+        // Центрируем по горизонтали и вертикали
+        const offsetX = (screenWidth - canvasWidth * scale) / 2;
+        const offsetY = (screenHeight - canvasHeight * scale) / 2;
+        canvas.style.left = offsetX + 'px';
+        canvas.style.top = offsetY + 'px';
+    }
+
+    // ============================================================
+    // 7. ПОСТРОЧНЫЙ ВЫВОД
     // ============================================================
     let currentLine = 0;
     const lineDelay = 40;
@@ -201,13 +225,19 @@
     }
 
     // ============================================================
-    // 7. ЗАПУСК
+    // 8. ЗАПУСК
     // ============================================================
-    fontImage.onload = function() {
+    function start() {
         buildCharMap();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        console.log('✅ Шрифт загружен, начинаем вывод...');
+        fitCanvas();
+        currentLine = 0;
         renderNextLine();
+    }
+
+    fontImage.onload = function() {
+        console.log('✅ Шрифт загружен');
+        start();
     };
 
     fontImage.onerror = function() {
@@ -218,20 +248,26 @@
     };
 
     if (fontImage.complete && fontImage.naturalWidth > 0) {
-        buildCharMap();
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        renderNextLine();
+        start();
     }
 
     // ============================================================
-    // 8. ПЕРЕЗАПУСК ПО КЛИКУ
+    // 9. ПЕРЕЗАПУСК ПО КЛИКУ / ТАПУ
     // ============================================================
     document.addEventListener('click', function() {
         if (currentLine >= logLines.length) {
-            currentLine = 0;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            currentLine = 0;
             renderNextLine();
         }
+    });
+
+    // ============================================================
+    // 10. ПЕРЕСЧЁТ МАСШТАБА ПРИ ПОВОРОТЕ / ИЗМЕНЕНИИ РАЗМЕРА
+    // ============================================================
+    window.addEventListener('resize', fitCanvas);
+    window.addEventListener('orientationchange', function() {
+        setTimeout(fitCanvas, 300);
     });
 </script>
 </body>
