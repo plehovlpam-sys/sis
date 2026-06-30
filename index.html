@@ -1,23 +1,18 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kindle Bootstrap</title>
+    <title>Kindle Boot</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; }
         body {
-            background: #ffffff;
-            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
+            min-height: 100vh;
+            background: #ffffff;
         }
-        .kindle-screen {
+        .screen {
             position: relative;
             width: 100vw;
             height: 100vh;
@@ -38,179 +33,195 @@
             max-width: 180px;
             height: auto;
         }
-        #logCanvas {
+        #log {
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            display: block;
-            background: transparent;
             image-rendering: pixelated;
             image-rendering: crisp-edges;
-            pointer-events: none;
+            background: transparent;
             z-index: 10;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
-<div class="kindle-screen" id="screen">
+<div class="screen">
     <div class="logo" id="logoContainer">
-        <img src="logokindle.png" alt="Kindle" id="logoImg">
+        <img src="logokindle.png" alt="Kindle">
     </div>
-    <canvas id="logCanvas"></canvas>
+    <canvas id="log"></canvas>
 </div>
 
 <script>
-    (function() {
-        // ============================================================
-        // ПАРАМЕТРЫ ШРИФТА
-        // ============================================================
-        const CHAR_W = 12;
-        const CHAR_H = 22;
-        const COLS_PER_ROW = 16;
+    // ============================================================
+    // 1. ЗАГРУЖАЕМ КАРТИНКУ
+    // ============================================================
+    const fontImage = new Image();
+    fontImage.src = '12x22.png';
 
-        // ============================================================
-        // ЛОГИ
-        // ============================================================
-        const logLines = [
-            '*****************************************',
-            '*         WELCOME TO KINDLE              *',
-            '*   Linux 3.0.35-lab126 #1 SMP PREEMPT  *',
-            '*   KINDLE REV: 10th Generation          *',
-            '*   SYSTEM: MAIN (User partition)        *',
-            '*   BATTERY: 98% (Charging)              *',
-            '*   STORAGE: 2.1 GB free of 3.2 GB       *',
-            '*****************************************',
-            '',
-            '[    0.000000] Booting Linux on physical CPU 0x0',
-            '[    0.000000] Linux version 3.0.35-lab126 (lab126@sw027) (gcc version 4.5.1)',
-            '[    0.000000] CPU: ARMv7 Processor [412fc09a] revision 10 (ARMv7)',
-            '[    0.000000] Memory: 512MB = 512MB total',
-            '[    0.390000] EXT3-fs (mmcblk0p1): mounted filesystem with writeback data mode',
-            '[    4.230000] EPDC: 1st update marker - pre-initialization flash',
-            '[    5.450000] input: framework_keypad as /devices/virtual/input/input0',
-            '[    6.520000] Battery: 4.172 Volts, 31 Degrees C, Charging',
-            '[    7.100000] wifi: firmware loaded successfully, link is UP',
-            '[    8.000000] *** System ready ***',
-            '',
-            'Kindle startup complete. Happy reading!',
-            '',
-            'login[1890]: root login on \'ttyS0\''
-        ];
+    const CHAR_W = 12;
+    const CHAR_H = 22;
+    const COLS = 16;
 
-        // ============================================================
-        // DOM
-        // ============================================================
-        const canvas = document.getElementById('logCanvas');
-        const ctx = canvas.getContext('2d');
-        const logoContainer = document.getElementById('logoContainer');
+    let charMap = {};
 
-        // ============================================================
-        // ЗАГРУЗКА ШРИФТА
-        // ============================================================
-        const fontImage = new Image();
-        fontImage.src = '12x22.png';
+    // ============================================================
+    // 2. ЛОГИ
+    // ============================================================
+    const logLines = [
+        '*****************************************',
+        '*         WELCOME TO KINDLE              *',
+        '*   Linux 3.0.35-lab126 #1 SMP PREEMPT  *',
+        '*   KINDLE REV: 10th Generation          *',
+        '*   SYSTEM: MAIN (User partition)        *',
+        '*   BATTERY: 98% (Charging)              *',
+        '*   STORAGE: 2.1 GB free of 3.2 GB       *',
+        '*****************************************',
+        '',
+        '[    0.000000] Booting Linux on physical CPU 0x0',
+        '[    0.000000] Linux version 3.0.35-lab126 (lab126@sw027)',
+        '[    0.000000] CPU: ARMv7 Processor [412fc09a] revision 10',
+        '[    0.000000] Memory: 512MB = 512MB total',
+        '[    0.390000] EXT3-fs (mmcblk0p1): mounted filesystem',
+        '[    4.230000] EPDC: 1st update marker - pre-initialization flash',
+        '[    5.450000] input: framework_keypad as /devices/virtual/input/input0',
+        '[    6.520000] Battery: 4.172 Volts, 31 Degrees C, Charging',
+        '[    7.100000] wifi: firmware loaded successfully, link is UP',
+        '[    8.000000] *** System ready ***',
+        '',
+        'Kindle startup complete. Happy reading!',
+        '',
+        'login[1890]: root login on \'ttyS0\''
+    ];
 
-        // ============================================================
-        // ПЕРЕМЕННЫЕ ДЛЯ АНИМАЦИИ
-        // ============================================================
-        let currentLine = 0;
-        const lineDelay = 30;
+    // ============================================================
+    // 3. КАРТА СИМВОЛОВ
+    // ============================================================
+    function buildCharMap() {
+        const totalRows = Math.floor(fontImage.height / CHAR_H);
+        const totalCols = Math.floor(fontImage.width / CHAR_W);
+        const asciiChars = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~';
+        
+        for (let i = 0; i < totalCols * totalRows && i < asciiChars.length; i++) {
+            charMap[i] = asciiChars[i];
+        }
+        for (let i = asciiChars.length; i < totalCols * totalRows; i++) {
+            charMap[i] = '?';
+        }
+    }
 
-        // ============================================================
-        // РАЗМЕР КАНВАСА
-        // ============================================================
-        function resizeCanvas() {
-            const rect = canvas.parentElement.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
+    // ============================================================
+    // 4. ОТРИСОВКА СИМВОЛА
+    // ============================================================
+    function drawChar(ctx, img, charCode, x, y) {
+        let foundIndex = -1;
+        for (let idx in charMap) {
+            if (charMap[idx] === String.fromCharCode(charCode)) {
+                foundIndex = parseInt(idx);
+                break;
+            }
         }
 
-        // ============================================================
-        // ОТРИСОВКА СИМВОЛА (РАБОЧАЯ ВЕРСИЯ)
-        // ============================================================
-        function drawChar(img, code, x, y) {
-            if (code < 0x20 || code > 0x7E) return;
-            const index = code - 0x20;
-            if (index < 0 || index >= 96) return;
-
-            const col = index % COLS_PER_ROW;
-            // ВСЕГДА берём жирный ряд (нижний) для всех символов
-            const row = 1; // нижний ряд
-
-            const sx = col * CHAR_W;
-            const sy = row * CHAR_H;
-
-            ctx.drawImage(
-                img,
-                sx, sy, CHAR_W, CHAR_H,
-                x, y, CHAR_W, CHAR_H
-            );
+        if (foundIndex === -1) {
+            ctx.fillStyle = '#ccc';
+            ctx.fillRect(x, y, CHAR_W, CHAR_H);
+            return;
         }
 
-        // ============================================================
-        // ОТРИСОВКА ОДНОЙ СТРОКИ
-        // ============================================================
-        function renderLine(line, rowIndex) {
-            if (!line) return;
-            const yPos = rowIndex * CHAR_H;
-            for (let col = 0; col < line.length; col++) {
+        const totalCols = Math.floor(img.width / CHAR_W);
+        const col = foundIndex % totalCols;
+        const row = Math.floor(foundIndex / totalCols);
+
+        // Берём жирный шрифт (нижний ряд)
+        const boldIndex = foundIndex + 16;
+        let sx = col * CHAR_W;
+        let sy = row * CHAR_H;
+        
+        if (boldIndex < (img.width / CHAR_W) * (img.height / CHAR_H)) {
+            const boldCol = boldIndex % totalCols;
+            const boldRow = Math.floor(boldIndex / totalCols);
+            sx = boldCol * CHAR_W;
+            sy = boldRow * CHAR_H;
+        }
+        
+        ctx.drawImage(img, sx, sy, CHAR_W, CHAR_H, x, y, CHAR_W, CHAR_H);
+    }
+
+    // ============================================================
+    // 5. НАСТРОЙКИ КАНВАСА
+    // ============================================================
+    const TERM_COLS = 80;
+    const TERM_ROWS = 30;
+
+    const canvas = document.getElementById('log');
+    const ctx = canvas.getContext('2d');
+
+    // Размер канваса — фиксированный, чтобы шрифт был маленьким
+    // 80 колонок × 12px = 960px, 30 строк × 22px = 660px
+    canvas.width = TERM_COLS * CHAR_W;
+    canvas.height = TERM_ROWS * CHAR_H;
+
+    // Центрируем канвас через CSS
+    canvas.style.position = 'absolute';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '960px';
+    canvas.style.height = '660px';
+    canvas.style.transform = 'scale(1)';
+    canvas.style.transformOrigin = 'top left';
+
+    // ============================================================
+    // 6. АНИМИРОВАННЫЙ ВЫВОД
+    // ============================================================
+    let currentLine = 0;
+    const lineDelay = 40;
+
+    function renderNextLine() {
+        if (currentLine >= logLines.length) {
+            console.log('✅ Boot complete!');
+            return;
+        }
+
+        const line = logLines[currentLine];
+        if (line) {
+            for (let col = 0; col < line.length && col < TERM_COLS; col++) {
                 const code = line.charCodeAt(col);
                 if (code >= 0x20 && code <= 0x7E) {
-                    drawChar(fontImage, code, col * CHAR_W, yPos);
+                    drawChar(ctx, fontImage, code, col * CHAR_W, currentLine * CHAR_H);
                 }
             }
         }
+        currentLine++;
 
-        // ============================================================
-        // ОТРИСОВКА СЛЕДУЮЩЕЙ СТРОКИ
-        // ============================================================
-        function renderNextLine() {
-            if (currentLine >= logLines.length) {
-                console.log('✅ Boot complete!');
-                return;
-            }
-
-            const line = logLines[currentLine];
-            renderLine(line, currentLine);
-            currentLine++;
-
-            if (currentLine < logLines.length) {
-                setTimeout(renderNextLine, lineDelay);
-            }
+        if (currentLine < logLines.length) {
+            setTimeout(renderNextLine, lineDelay);
         }
+    }
 
-        // ============================================================
-        // ЗАПУСК
-        // ============================================================
-        function startBoot() {
-            resizeCanvas();
-            currentLine = 0;
-            // Очищаем канвас (прозрачный фон)
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            renderNextLine();
-        }
+    // ============================================================
+    // 7. ЗАПУСК
+    // ============================================================
+    fontImage.onload = function() {
+        buildCharMap();
+        // Очищаем канвас (прозрачный фон)
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        console.log('✅ Шрифт загружен, начинаем загрузку...');
+        renderNextLine();
+    };
 
-        fontImage.onload = function() {
-            console.log('✅ Шрифт загружен');
-            startBoot();
-        };
+    fontImage.onerror = function() {
+        console.error('❌ 12x22.png не найден!');
+        ctx.fillStyle = '#000';
+        ctx.font = '14px monospace';
+        ctx.fillText('ERROR: 12x22.png not found!', 10, 30);
+    };
 
-        fontImage.onerror = function() {
-            console.error('❌ 12x22.png не найден!');
-            ctx.fillStyle = '#000';
-            ctx.font = '14px monospace';
-            ctx.fillText('ERROR: 12x22.png not found!', 10, 30);
-        };
-
-        // Если картинка уже загружена
-        if (fontImage.complete && fontImage.naturalWidth > 0) {
-            startBoot();
-        }
-
-        window.addEventListener('resize', resizeCanvas);
-    })();
+    // Если картинка уже загружена
+    if (fontImage.complete && fontImage.naturalWidth > 0) {
+        buildCharMap();
+        renderNextLine();
+    }
 </script>
 </body>
 </html>
