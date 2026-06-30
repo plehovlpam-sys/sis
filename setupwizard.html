@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Настройка Kindle</title>
     <style>
-        /* Подключение кастомного шрифта */
         @font-face {
             font-family: 'CustomKindle';
             src: url('standart.ttf') format('truetype');
@@ -13,10 +12,9 @@
             font-style: normal;
         }
 
-        /* Базовые сбросы */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-            background-color: #f7f8f7; 
+            background-color: #ffffff;
             font-family: 'CustomKindle', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             color: #222; 
             height: 100vh; width: 100vw; 
@@ -27,11 +25,9 @@
         #app { display: flex; flex-direction: column; height: 100%; width: 100%; padding: 20px 25px; position: relative; }
         .content { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; overflow-y: auto; }
 
-        /* Скрытие/Показ шагов (без анимаций) */
         .step { display: none; flex-direction: column; height: 100%; width: 100%; }
         .step.active { display: flex; }
 
-        /* Типографика */
         h1 { font-size: 25px; font-weight: 400; text-align: center; margin-bottom: 12px; letter-spacing: 0.5px; }
         h2 { font-size: 23px; font-weight: 400; text-align: center; margin-bottom: 10px; }
         p { font-size: 14px; line-height: 1.5; color: #444; text-align: center; margin-bottom: 15px; }
@@ -39,7 +35,6 @@
         .text-tiny { font-size: 11px; color: #777; line-height: 1.4; }
         .text-left { text-align: left; }
         
-        /* Кнопки */
         .btn { 
             background-color: #2e353a; color: white; border: none; padding: 12px 0; font-size: 15px; 
             width: 100%; max-width: 280px; text-align: center; cursor: pointer; margin: 6px auto; display: block;
@@ -48,29 +43,25 @@
         .btn-disabled { background-color: #dbdbdb; color: #999; cursor: default; }
         .btn-small { max-width: 200px; }
         
-        /* Формы */
         .input-group { margin-bottom: 12px; width: 100%; }
         .input-field { width: 100%; padding: 11px 12px; border: 1px solid #ccc; background: transparent; font-size: 15px; }
         .input-field::placeholder { color: #aaa; }
 
-        /* --- КАСТОМНЫЕ ЧЕКБОКСЫ --- */
         .checkbox-group { display: flex; align-items: center; font-size: 14px; margin: 8px 0; cursor: pointer; }
         .custom-checkbox {
             appearance: none; -webkit-appearance: none;
             width: 18px; height: 18px;
-            border: 1px solid #222; /* Черная рамка */
+            border: 1px solid #222;
             background-color: transparent;
             margin-right: 12px;
             position: relative;
             cursor: pointer;
             flex-shrink: 0;
         }
-        /* Состояние: нажато (галочка внутри) */
         .custom-checkbox:checked {
-            background-color: #222; /* Черный фон */
+            background-color: #222;
             border-color: #222;
         }
-        /* Рисуем галочку с помощью псевдо-элемента */
         .custom-checkbox:checked::after {
             content: '';
             position: absolute;
@@ -80,32 +71,24 @@
             border-width: 0 2px 2px 0;
             transform: rotate(45deg);
         }
-        /* Состояние фокуса для доступности */
-        .custom-checkbox:focus { outline: 1px dotted #222; }
 
-        /* Разделитель */
         .or-divider { display: flex; align-items: center; justify-content: center; width: 100%; margin: 15px 0; color: #666; font-size: 14px; }
         .or-divider::before, .or-divider::after { content: ""; flex: 1; border-top: 1px solid #ddd; }
         .or-divider span { padding: 0 15px; }
 
-        /* Дерево */
         .tree-container { width: 100%; display: flex; justify-content: center; align-items: flex-end; flex-shrink: 0; margin-top: auto; padding-bottom: 5px; }
         .tree-container img { max-height: 150px; width: auto; max-width: 100%; display: block; }
 
-        /* Иллюстрации */
         .illustration-box { display: flex; justify-content: center; align-items: center; margin: 5px 0 15px 0; flex-shrink: 0; }
         .illustration-box img { max-height: 110px; width: auto; max-width: 100%; }
 
-        /* Выбор страны */
         .country-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0 15px; text-align: center; font-size: 14px; }
         .country-item { padding: 8px 0; cursor: pointer; border: 1px solid transparent; }
-        .country-item.selected { border: 1px solid #2e353a; } /* Выбранная страна в рамку */
+        .country-item.selected { border: 1px solid #2e353a; }
 
-        /* Оплата */
         .payment-tabs { display: flex; border-bottom: 1px solid #ccc; margin-bottom: 15px; }
         .payment-tab { flex: 1; text-align: center; padding: 10px 0; font-size: 13px; cursor: pointer; }
         .payment-tab.active { border-bottom: 2px solid #333; font-weight: 500; }
-        
         .payment-row-flex { display: flex; gap: 10px; margin: 10px 0; }
         .payment-col { flex: 1; }
         .payment-col select { width: 100%; padding: 10px; border: 1px solid #ccc; background: transparent; font-size: 14px; }
@@ -113,84 +96,79 @@
         .phone-group { display: flex; border: 1px solid #ccc; margin: 15px 0; }
         .phone-prefix { padding: 10px; border-right: 1px solid #ccc; width: 70px; text-align: center; font-size: 14px; background: #f0f0f0; }
         .phone-input { flex: 1; border: none; padding: 10px; font-size: 15px; background: transparent; }
-        .phone-input:focus { outline: none; }
 
-        /* Goodreads */
-        .gr-logo { font-size: 26px; color: #666; text-align: center; margin: 5px 0; font-weight: 300; letter-spacing: 0.5px; } /* Уменьшен интервал */
+        .gr-logo { font-size: 26px; color: #666; text-align: center; margin: 5px 0; font-weight: 300; letter-spacing: 0.5px; }
         .gr-opt { display: flex; justify-content: space-between; align-items: flex-start; margin: 10px 0; padding: 5px 0; }
         .gr-opt h4 { font-size: 14px; font-weight: 500; margin: 0; }
         .gr-opt p { font-size: 12px; text-align: left; color: #666; margin: 2px 0; }
         .gr-check { font-size: 18px; }
 
-        /* Модальное окно */
         #modal-overlay {
             display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.4); z-index: 100; justify-content: center; align-items: center;
         }
         #modal-box {
-            background: #f7f8f7; width: 90%; max-width: 350px; padding: 25px; 
+            background: #ffffff; width: 90%; max-width: 350px; padding: 25px; 
             display: flex; flex-direction: column; align-items: center;
         }
         #modal-box h3 { font-size: 18px; font-weight: 400; text-align: center; margin-bottom: 15px; line-height: 1.4; }
         #modal-buttons { display: flex; gap: 10px; width: 100%; justify-content: center; margin-top: 10px; }
         #modal-buttons .btn { max-width: 120px; padding: 10px 0; font-size: 14px; margin: 0; }
 
-        /* Всплывающие сообщения */
-        .toast {
-            position: absolute; top: 20px; left: 20px; right: 20px;
-            background: white; padding: 12px; border: 1px solid #ccc;
-            text-align: center; font-size: 14px; z-index: 200; display: none; color: #333;
+        .loading-container {
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            height: 100%; width: 100%;
         }
+        .loading-container img { max-width: 80%; height: auto; }
+        .loading-text { margin-top: 25px; text-align: center; font-size: 14px; color: #555; }
     </style>
 </head>
 <body>
 
 <div id="app">
-    <div id="toast" class="toast"></div>
-
-    <!-- ШАГ 1 -->
+    <!-- ШАГ 1: Приветствие -->
     <div class="step active" id="step1">
         <div class="content">
             <h1>Здравствуйте,</h1>
             <p>Поздравляем вас с приобретением Kindle Paperwhite!<br>Вы легко можете настроить это устройство. Если на вашем телефоне установлено приложение Kindle, используйте его для упрощения настройки устройства.</p>
             <button class="btn" onclick="goToStep(2)">Настройка на этом Kindle</button>
             <div class="or-divider"><span>ИЛИ</span></div>
-            <button class="btn btn-small">Настройка с&nbsp;помощью&nbsp;телефона</button>
+            <!-- ЗАПУСК ЗАГРУЗКИ ПО КНОПКЕ ТЕЛЕФОНА -->
+            <button class="btn btn-small" onclick="triggerPhoneLoading()">Настройка с&nbsp;помощью&nbsp;телефона</button>
             <p class="text-small" style="margin-top: 20px;">У вас нет приложения? Скачайте «Amazon Kindle» для iOS или Android.</p>
         </div>
         <div class="tree-container"><img src="downthere.jpeg" alt="Дерево"></div>
     </div>
 
-    <!-- ШАГ 2 -->
+    <!-- ШАГ 2: Регистрация (С возвращенным текстом) -->
     <div class="step" id="step2">
         <div class="content">
             <h2>Регистрация Kindle</h2>
             <p class="text-small" style="margin-bottom: 20px;">Введите данные учетной записи Amazon, чтобы добавить Kindle в учетную запись Amazon.</p>
             <div class="input-group"><input type="text" class="input-field" placeholder="Электронная почта или номер телефона"></div>
-            
-            <div class="input-group">
-                <input type="password" id="regPassword" class="input-field" placeholder="Пароль">
-            </div>
-            
+            <div class="input-group"><input type="password" id="regPassword" class="input-field" placeholder="Пароль"></div>
             <label class="checkbox-group">
                 <input type="checkbox" id="hidePassReg" class="custom-checkbox" onchange="togglePassword('regPassword', 'hidePassReg')" checked>
                 <span>Скрыть пароль</span>
             </label>
-            
             <div style="display: flex; gap: 10px; margin: 15px 0;">
                 <button class="btn btn-outline" onclick="goToStep(3)" style="padding: 10px 0;">Создать новую уч. запись</button>
                 <button class="btn btn-disabled" style="padding: 10px 0; max-width: 100px;">Войти</button>
             </div>
-            <p class="text-tiny text-left">Нажимая «Войти» или «Создать новую учетную запись», вы принимаете «Условия использования Amazon» и все условия, размещенные по адресу www.amazon.com/devicesupport. См. Уведомление о конфиденциальности Amazon, выбрав свою страну и нажав «Конфиденциальность».</p>
+            
+            <!-- ВОЗВРАЩЕННЫЙ ТЕКСТ ЛИЦЕНЗИИ -->
+            <p class="text-tiny text-left" style="margin-top: 15px;">
+                Нажимая «Войти» или «Создать новую учетную запись», вы принимаете <u>«Условия использования Amazon»</u> и все условия, размещенные по адресу www.amazon.com/devicesupport. См. Уведомление о конфиденциальности Amazon, выбрав свою страну и нажав «Конфиденциальность».
+            </p>
         </div>
     </div>
 
-    <!-- ШАГ 3 -->
+    <!-- ШАГ 3: Страна -->
     <div class="step" id="step3">
         <div class="content">
             <h2>Создать учетную запись Amazon</h2>
             <p class="text-small">Выберите страну своего проживания в списке ниже.</p>
-            <div class="country-grid" id="countryGrid">
+            <div class="country-grid">
                 <div class="country-item" onclick="selectCountry(this)">Соединенные Штаты</div>
                 <div class="country-item" onclick="selectCountry(this)">Великобритания</div>
                 <div class="country-item" onclick="selectCountry(this)">Япония</div>
@@ -217,70 +195,48 @@
         </div>
     </div>
 
-    <!-- ШАГ 4 (ИСПРАВЛЕНА КНОПКА ДАЛЕЕ) -->
+    <!-- ШАГ 4: Создание учетки -->
     <div class="step" id="step4">
         <div class="content">
             <h2>Создать учетную запись<br>Amazon</h2>
             <p class="text-small">Введите сведения, которые хотите использовать для входа в Amazon.</p>
-            
             <div class="input-group"><input type="text" id="fullNameInput" class="input-field" placeholder="Имя и фамилия"></div>
             <div class="input-group"><input type="text" class="input-field" placeholder="Адрес вашей электронной почты"></div>
-            
             <div class="input-group">
                 <input type="password" id="createPassword" class="input-field" placeholder="Создание пароля">
                 <p class="text-tiny text-left" style="margin-top: 5px;">Пароль должен содержать не менее 6 символов.</p>
             </div>
-            
             <label class="checkbox-group" style="margin-bottom: 20px;">
                 <input type="checkbox" id="showPassCheck" class="custom-checkbox" onchange="togglePassword('createPassword', 'showPassCheck')">
                 <span id="showPassText">Показать пароль</span>
             </label>
-            
             <button class="btn" onclick="saveAndGoToStep5()" style="margin-top: 10px;">Далее</button>
             <button class="btn btn-outline" onclick="goToStep(3)" style="background: white;">Отмена</button>
         </div>
     </div>
 
-    <!-- ШАГ 5 -->
+    <!-- ШАГ 5: Оплата -->
     <div class="step" id="step5">
         <div class="content">
             <h2>Добавление способа оплаты</h2>
             <p class="text-small" id="payment-desc">Добавьте карту и сохраните для будущих покупок в магазине Kindle.</p>
-            
             <div class="payment-tabs">
                 <div class="payment-tab active" onclick="switchPaymentTab('bank')">Добавление банковской карты</div>
                 <div class="payment-tab" onclick="switchPaymentTab('gift')">Добавление подарочной карты</div>
             </div>
-            
             <div id="bank-form">
                 <div class="input-group"><input type="text" class="input-field" placeholder="Имя на карте"></div>
                 <div class="input-group"><input type="text" class="input-field" placeholder="Номер карты"></div>
-                
                 <div class="payment-row-flex">
-                    <div class="payment-col">
-                        <select>
-                            <option>01</option><option>02</option><option>03</option><option>04</option>
-                            <option>05</option><option>06</option><option>07</option><option>08</option>
-                            <option>09</option><option>10</option><option>11</option><option>12</option>
-                        </select>
-                    </div>
-                    <div class="payment-col">
-                        <select>
-                            <option>2024</option><option>2025</option><option>2026</option><option>2027</option>
-                            <option>2028</option><option>2029</option><option>2030</option>
-                        </select>
-                    </div>
-                    <div class="payment-col">
-                        <input type="text" class="input-field" placeholder="CVC" style="padding: 10px;">
-                    </div>
+                    <div class="payment-col"><select><option>01</option><option>02</option></select></div>
+                    <div class="payment-col"><select><option>2024</option><option>2025</option></select></div>
+                    <div class="payment-col"><input type="text" class="input-field" placeholder="CVC" style="padding: 10px;"></div>
                 </div>
-                
                 <div style="display: flex; justify-content: space-between; margin-top: 20px;">
                     <button class="btn btn-outline" onclick="goToStep(6)" style="max-width: 140px; padding: 10px 0;">Настроить позже</button>
                     <button class="btn" style="max-width: 140px; padding: 10px 0;">Добавить карту</button>
                 </div>
             </div>
-
             <div id="gift-form" style="display: none;">
                 <div class="input-group"><input type="text" id="gift-code" class="input-field" placeholder="Введите код подарочной карты"></div>
                 <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
@@ -290,7 +246,7 @@
         </div>
     </div>
 
-    <!-- ШАГ 6 -->
+    <!-- ШАГ 6: Приветствие -->
     <div class="step" id="step6">
         <div class="content">
             <h1 id="greetingHeader">Привет, Иван</h1>
@@ -298,18 +254,18 @@
             <button class="btn" onclick="goToStep(7)" style="max-width: 150px;">Далее</button>
             <div class="or-divider" style="margin: 30px 0 15px 0;"></div>
             <p class="text-small">Вы не <span id="nameInQuestion">Иван</span> ?</p>
-            <button class="btn btn-outline" onclick="showModal()" style="max-width: 260px; padding: 12px 0; background: white;">Использовать другую учетную запись</button>
+            <button class="btn btn-outline" onclick="showAccountModal()" style="max-width: 260px; padding: 12px 0; background: white;">Использовать другую учетную запись</button>
         </div>
         <div class="tree-container"><img src="downthere.jpeg" alt="Дерево"></div>
     </div>
 
-    <!-- ШАГ 7 -->
+    <!-- ШАГ 7: Приложение -->
     <div class="step" id="step7">
         <div class="content">
             <div class="illustration-box"><img src="kindle_app_icon.png" alt="Иконка Kindle" style="max-height: 70px;"></div>
             <h2>Получить приложение Kindle</h2>
-            <p class="text-small">Получайте важные оповещения с устройств, автоматически синхронизируйте свою библиотеку и никогда не оставайтесь без книги для чтения, используя бесплатное приложение Kindle для iOS и Android.</p>
-            <p class="text-small"><b>Введите свой номер телефона ниже, и мы поможем вам получить его из магазина приложений для вашего телефона или планшета.</b></p>
+            <p class="text-small">Получайте важные оповещения и синхронизируйте библиотеку.</p>
+            <p class="text-small"><b>Введите номер телефона ниже.</b></p>
             <div class="phone-group">
                 <div class="phone-prefix">US (+1) ▼</div>
                 <input type="text" class="phone-input" placeholder="Номер телефона">
@@ -321,22 +277,19 @@
         </div>
     </div>
 
-    <!-- ШАГ 8 -->
+    <!-- ШАГ 8: Goodreads -->
     <div class="step" id="step8">
         <div class="content">
             <div class="illustration-box"><img src="goodreads_illustration.png" alt="Goodreads"></div>
             <div class="gr-logo">goodreads</div>
-            <p class="text-small">Станьте частью крупнейшего в мире сообщества любителей книг на Goodreads. Получайте рекомендации от читателей со схожими интересами.</p>
-            
+            <p class="text-small">Станьте частью крупнейшего сообщества любителей книг.</p>
             <div class="gr-opt">
                 <div><h4>Создать уч. запись с помощью уч. данных Amazon</h4><p>Используйте уч. запись Amazon для входа в Goodreads.</p></div>
                 <div class="gr-check">✓</div>
             </div>
-            
             <div class="gr-opt" style="border-top: 1px solid #eee; padding-top: 15px;">
-                <div><h4>Войдите в систему с помощью другого адреса электронной почты</h4><p>Используйте другой адрес электронной почты для входа в существующую учетную запись Goodreads.</p></div>
+                <div><h4>Войдите в систему с помощью другого адреса электронной почты</h4></div>
             </div>
-            
             <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
                 <button class="btn btn-outline" style="max-width: 120px; padding: 10px 0; background: white;">Нет, спасибо</button>
                 <button class="btn" style="max-width: 100px; padding: 10px 0;">Далее</button>
@@ -344,68 +297,73 @@
         </div>
     </div>
 
-    <!-- Модалка -->
-    <div id="modal-overlay">
-        <div id="modal-box">
-            <h3>Вы действительно хотите больше не представляться системе Kindle как <span id="modalName">Иван</span>? Вы будете должны указать данные другой учетной записи Amazon, чтобы продолжить</h3>
-            <div id="modal-buttons">
-                <button class="btn btn-outline" onclick="hideModal()" style="background: white;">Отмена</button>
-                <button class="btn" onclick="confirmChangeAccount()">Да</button>
+    <!-- Экран Загрузки -->
+    <div class="step" id="stepLoading">
+        <div class="content">
+            <div class="loading-container">
+                <img id="loaderImage" src="load1.png" alt="Загрузка">
+                <div class="loading-text">Инициализация устройства...</div>
             </div>
         </div>
     </div>
+</div>
 
+<!-- Модальное окно -->
+<div id="modal-overlay">
+    <div id="modal-box">
+        <h3 id="modalMessage">Сообщение</h3>
+        <div id="modal-buttons">
+            <button class="btn" id="modalActionBtn" onclick="closeModal()">Хорошо</button>
+        </div>
+    </div>
 </div>
 
 <script>
-    // --- Инициализация имени пользователя ---
-    let currentName = localStorage.getItem('kindleUserName') || "Иван";
+    let currentName = "Иван";
+    let isLoadingActive = false;
+    let loaderTimer = null;
 
-    // --- Навигация ---
+    window.onload = function() {
+        const storedName = localStorage.getItem('kindleUserName');
+        if (storedName) {
+            currentName = storedName;
+            updateGreeting();
+        }
+    };
+
     function goToStep(id) {
-        document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+        if(isLoadingActive) return;
+        document.querySelectorAll('#app .step').forEach(el => el.classList.remove('active'));
         document.getElementById('step' + id).classList.add('active');
-        hideModal();
+        closeModal();
     }
 
-    // --- Выбор страны (черная рамка) ---
     function selectCountry(element) {
-        const items = document.querySelectorAll('.country-item');
-        items.forEach(el => el.classList.remove('selected'));
+        document.querySelectorAll('.country-item').forEach(el => el.classList.remove('selected'));
         element.classList.add('selected');
     }
 
-    // --- Сохранение имени в LocalStorage и переход к оплате ---
     function saveAndGoToStep5() {
         const nameInput = document.getElementById('fullNameInput').value.trim();
         if(nameInput) {
             localStorage.setItem('kindleUserName', nameInput);
             currentName = nameInput;
+            updateGreeting();
         }
         goToStep(5);
     }
 
-    // --- Обновление имени на Шаге 6 и в модалке при загрузке ---
     function updateGreeting() {
         const header = document.getElementById('greetingHeader');
         const question = document.getElementById('nameInQuestion');
-        const modalName = document.getElementById('modalName');
-        
-        if(currentName) {
-            header.innerText = `Привет, ${currentName}`;
-            question.innerText = currentName;
-            modalName.innerText = currentName;
-        }
+        if(header) header.innerText = `Привет, ${currentName}`;
+        if(question) question.innerText = currentName;
     }
-    // Запускаем при загрузке
-    updateGreeting();
 
-    // --- Показ/Скрытие пароля ---
     function togglePassword(inputId, checkboxId) {
         const input = document.getElementById(inputId);
         const checkbox = document.getElementById(checkboxId);
         const textSpan = document.getElementById('showPassText');
-        
         if(checkbox.checked) {
             input.type = "password";
             if(textSpan) textSpan.innerText = "Скрыть пароль";
@@ -415,65 +373,91 @@
         }
     }
 
-    // --- Логика оплаты ---
     function switchPaymentTab(type) {
         const tabs = document.querySelectorAll('.payment-tab');
         tabs.forEach(t => t.classList.remove('active'));
-        
         if(type === 'bank') {
             tabs[0].classList.add('active');
             document.getElementById('bank-form').style.display = 'block';
             document.getElementById('gift-form').style.display = 'none';
-            document.getElementById('payment-desc').innerText = "Добавьте карту и сохраните для будущих покупок в магазине Kindle.";
         } else {
             tabs[1].classList.add('active');
             document.getElementById('bank-form').style.display = 'none';
             document.getElementById('gift-form').style.display = 'block';
-            document.getElementById('payment-desc').innerText = "Введите код подарочной карты, чтобы пополнить баланс.";
         }
     }
 
     function applyGiftCard() {
+        if(isLoadingActive) return;
         const input = document.getElementById('gift-code');
         const btn = document.getElementById('apply-gift-btn');
-        const val = input.value.trim();
-
-        if (!val) {
-            showToast("Пожалуйста, введите код подарочной карты.");
-            return;
-        }
-
-        btn.disabled = true;
-        btn.innerText = "Подключаюсь к серверу";
-        btn.style.opacity = "0.7";
-
+        if (!input.value.trim()) return;
+        btn.disabled = true; btn.innerText = "Подключаюсь...";
         setTimeout(() => {
-            btn.innerText = "Применить код";
-            btn.style.opacity = "1";
-            btn.disabled = false;
-            showToast("Неверный код подарочной карты.");
-        }, 1500);
+            btn.innerText = "Применить код"; btn.disabled = false;
+            showErrorModal("Неверный код подарочной карты.");
+        }, 1000);
     }
 
-    // --- Модальное окно ---
-    function showModal() {
-        document.getElementById('modal-overlay').style.display = 'flex';
+    // --- ЛОГИКА ЗАГРУЗКИ ДЛЯ КНОПКИ ТЕЛЕФОНА ---
+    function triggerPhoneLoading() {
+        if (isLoadingActive) return;
+        isLoadingActive = true;
+
+        document.querySelectorAll('#app .step').forEach(el => el.classList.remove('active'));
+        document.getElementById('stepLoading').classList.add('active');
+        
+        const loaderImg = document.getElementById('loaderImage');
+        let progress = 0;
+        const totalTime = 5000; 
+        const intervalTime = totalTime / 7;
+
+        if(loaderTimer) clearInterval(loaderTimer);
+
+        loaderTimer = setInterval(() => {
+            progress++;
+            loaderImg.src = `load${progress}.png`;
+            
+            if (progress >= 7) {
+                clearInterval(loaderTimer);
+                loaderTimer = null;
+                isLoadingActive = false;
+                
+                // ВЫДАЕМ ОШИБКУ ПОСЛЕ ЗАГРУЗКИ
+                const errorText = "Unfortunately, registering a new Kindle device through the app is currently unavailable in your region. Try activating the device without going through the app setup. For more information, see www.amazon.com/gp/help/customer/display.html?nodeId=GCBBSZMUXA6U2P8R";
+                showErrorModal(errorText);
+            }
+        }, intervalTime);
     }
-    function hideModal() {
+
+    function showErrorModal(message) {
+        const overlay = document.getElementById('modal-overlay');
+        const msgBox = document.getElementById('modalMessage');
+        const btn = document.getElementById('modalActionBtn');
+        msgBox.innerText = message;
+        btn.onclick = function() { closeModal(); goToStep(1); };
+        overlay.style.display = 'flex';
+    }
+
+    function showAccountModal() {
+        const overlay = document.getElementById('modal-overlay');
+        const msgBox = document.getElementById('modalMessage');
+        const btn = document.getElementById('modalActionBtn');
+        msgBox.innerText = `Вы действительно хотите больше не представляться системе Kindle как ${currentName}? Вы будете должны указать данные другой учетной записи Amazon, чтобы продолжить`;
+        btn.onclick = function() {
+            closeModal();
+            localStorage.removeItem('kindleUserName');
+            currentName = "Иван";
+            updateGreeting();
+            goToStep(2);
+        };
+        overlay.style.display = 'flex';
+    }
+
+    function closeModal() {
         document.getElementById('modal-overlay').style.display = 'none';
     }
-    function confirmChangeAccount() {
-        hideModal();
-        goToStep(2);
-    }
 
-    // --- Сообщения ---
-    function showToast(message) {
-        const toast = document.getElementById('toast');
-        toast.innerText = message;
-        toast.style.display = 'block';
-        setTimeout(() => { toast.style.display = 'none'; }, 3000);
-    }
 </script>
 
 </body>
