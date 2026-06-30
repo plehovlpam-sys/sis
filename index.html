@@ -43,6 +43,10 @@
             display: block;
             max-width: 120px;
             height: auto;
+            transition: all 0.3s ease;
+        }
+        .logo.big img {
+            max-width: 160px;
         }
         #log {
             position: absolute;
@@ -53,10 +57,6 @@
             background: transparent;
             z-index: 10;
             pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.15s ease;
-        }
-        #log.show {
             opacity: 1;
         }
     </style>
@@ -297,8 +297,9 @@
 
         // --- ШАГ 1: Белый фон, ничего нет, ждём 2.5 секунды ---
         screen.style.background = '#ffffff';
-        canvas.classList.remove('show');
+        canvas.style.opacity = '1';
         logoContainer.classList.remove('show');
+        logoContainer.classList.remove('big');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
         await new Promise(resolve => setTimeout(resolve, 2500));
@@ -311,7 +312,6 @@
         logoContainer.classList.add('show');
 
         // --- ШАГ 4: Выводим сообщение Recovery ---
-        canvas.classList.add('show');
         renderTextOnCanvas(recoveryMessage, 10);
 
         // --- ШАГ 5: Ждём 3 секунды ---
@@ -345,9 +345,17 @@
             }, 100);
         });
 
-        // --- ШАГ 11: Убираем логи, оставляем только лого Kindle ---
-        canvas.classList.remove('show');
-        logoContainer.classList.add('show');
+        // --- ШАГ 11: Мгновенно убираем логи (без fade out) ---
+        canvas.style.opacity = '0';
+        
+        // --- ШАГ 12: Увеличиваем логотип ---
+        logoContainer.classList.add('big');
+
+        // --- ШАГ 13: Чёрное моргание (0.01s) ---
+        screen.style.background = '#000000';
+        await new Promise(resolve => setTimeout(resolve, 10));
+        screen.style.background = '#ffffff';
+        
         bootSequenceRunning = false;
     }
 
