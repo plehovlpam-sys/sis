@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Kindle Boot Log Emulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            background: #000;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: monospace;
+        }
+        canvas {
+            background: #000;
+            border: 2px solid #333;
+            border-radius: 4px;
+            padding: 20px;
+            image-rendering: pixelated; /* Сохраняет чёткость пикселей */
+        }
+    </style>
+</head>
+<body>
+    <canvas id="log"></canvas>
+
+    <script>
+        // =============================================
+        // 1. ЗАГРУЗИТЕ ВАШУ КАРТИНКУ 12x22.png
+        // =============================================
+        const fontImage = new Image();
+        fontImage.src = '12x22.png'; // Убедитесь, что файл лежит рядом
+
+        // Параметры шрифта (из названия файла)
+        const CHAR_W = 12;
+        const CHAR_H = 22;
+        const COLS = 16;  // 16 символов в ряду
+
+        // Размер холста: 80 колонок x 30 строк (как в терминале)
+        const TERM_COLS = 80;
+        const TERM_ROWS = 30;
+
+        const canvas = document.getElementById('log');
+        canvas.width = TERM_COLS * CHAR_W;
+        canvas.height = TERM_ROWS * CHAR_H;
+        const ctx = canvas.getContext('2d');
+
+        // =============================================
+        // 2. ЛОГИ ДЛЯ ВЫВОДА
+        // =============================================
+        const logLines = [
+            '*****************************************',
+            '*         WELCOME TO KINDLE              *',
+            '*   Linux 3.0.35-lab126 #1 SMP PREEMPT  *',
+            '*   KINDLE REV: 10th Generation          *',
+            '*   SYSTEM: MAIN (User partition)        *',
+            '*   BATTERY: 98% (Charging)              *',
+            '*   STORAGE: 2.1 GB free of 3.2 GB       *',
+            '*****************************************',
+            '',
+            '[    0.000000] Booting Linux on physical CPU 0x0',
+            '[    0.000000] Linux version 3.0.35-lab126 (lab126@sw027) (gcc version 4.5.1)',
+            '[    0.000000] CPU: ARMv7 Processor [412fc09a] revision 10 (ARMv7)',
+            '[    0.000000] Memory: 512MB = 512MB total',
+            '[    0.390000] EXT3-fs (mmcblk0p1): mounted filesystem with writeback data mode',
+            '[    4.230000] EPDC: 1st update marker - pre-initialization flash',
+            '[    5.450000] input: framework_keypad as /devices/virtual/input/input0',
+            '[    6.520000] Battery: 4.172 Volts, 31 Degrees C, Charging',
+            '[    7.100000] wifi: firmware loaded successfully, link is UP',
+            '[    8.000000] *** System ready ***',
+            '',
+            'Kindle startup complete. Happy reading! 📚',
+            '',
+            'login[1890]: root login on \'ttyS0\''
+        ];
+
+        // =============================================
+        // 3. ФУНКЦИЯ ОТРИСОВКИ СИМВОЛА С КАРТИНКИ
+        // =============================================
+        function drawChar(ctx, img, code, x, y, bold) {
+            // ASCII коды от 0x20 (пробел) до 0x7E (~)
+            // Смещение: первый символ (пробел) имеет код 0x20
+            const index = code - 0x20;
+            if (index < 0 || index > 95) return; // Выход за границы ASCII
+
+            // Вычисляем позицию символа в таблице на картинке
+            // bold = 0 (верхний ряд) или 1 (нижний)
+            const row = bold ? 1 : 0; 
+            const col = index % COLS;
+
+            // Координаты на PNG
+            const sx = col * CHAR_W;
+            const sy = row * CHAR_H;
+
+            // Рисуем символ на холсте
+            ctx.drawImage(
+                img,
+                sx, sy, CHAR_W, CHAR_H,   // откуда вырезать
+                x, y, CHAR_W, CHAR_H      // куда вставить
+            );
+        }
+
+        // =============================================
+        // 4. ОСНОВНАЯ ФУНКЦИЯ ОТРИСОВКИ
+        // =============================================
+        function renderLog() {
+            // Очищаем холст (чёрный фон)
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Проходим по всем строкам
+            for (let row = 0; row < logLines.length && row < TERM_ROWS; row++) {
+                const line = logLines[row];
+                if (!line) continue;
+
+                // Проходим по символам в строке
+                for (let col = 0; col < line.length && col < TERM_COLS; col++) {
+                    const code = line.charCodeAt(col);
+                    
+                    // Проверяем, что символ есть в таблице (0x20-0x7E)
+                    if (code >= 0x20 && code <= 0x7E) {
+                        // Все символы в логах — жирные (нижний ряд), кроме некоторых
+                        // Можно сделать: жирный для букв/цифр, обычный для спецсимволов
+                        const bold = (code >= 0x30 && code <= 0x5A) || // цифры и заглавные
+                                     (code >= 0x61 && code <= 0x7A) || // строчные
+                                     code === 0x20; // пробел
+                        
+                        drawChar(
+                            ctx,
+                            fontImage,
+                            code,
+                            col * CHAR_W,
+                            row * CHAR_H,
+                            bold ? 1 : 0
+                        );
+                    }
+                }
+            }
+        }
+
+        // =============================================
+        // 5. ЗАПУСК
+        // =============================================
+        fontImage.onload = function() {
+            renderLog();
+            console.log('✅ Kindle log rendered successfully!');
+        };
+
+        fontImage.onerror = function() {
+            console.error('❌ Failed to load 12x22.png! Make sure the file is in the same folder.');
+            // Показываем сообщение об ошибке на холсте
+            ctx.fillStyle = '#0f0';
+            ctx.font = '14px monospace';
+            ctx.fillText('ERROR: 12x22.png not found!', 10, 30);
+        };
+    </script>
+</body>
+</html>
