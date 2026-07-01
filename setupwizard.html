@@ -3,462 +3,496 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Настройка Kindle</title>
+    <title>Kindle UI</title>
     <style>
         @font-face {
-            font-family: 'CustomKindle';
-            src: url('standart.ttf') format('truetype');
+            font-family: 'KindleFont';
+            src: url('/standard.ttf') format('truetype');
             font-weight: normal;
             font-style: normal;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
             background-color: #ffffff;
-            font-family: 'CustomKindle', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            color: #222; 
-            height: 100vh; width: 100vw; 
-            overflow: hidden; 
-            display: flex; flex-direction: column;
+            font-family: 'KindleFont', sans-serif;
+            color: #000;
+            overflow: hidden;
         }
 
-        #app { display: flex; flex-direction: column; height: 100%; width: 100%; padding: 20px 25px; position: relative; }
-        .content { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; overflow-y: auto; }
-
-        .step { display: none; flex-direction: column; height: 100%; width: 100%; }
-        .step.active { display: flex; }
-
-        h1 { font-size: 25px; font-weight: 400; text-align: center; margin-bottom: 12px; letter-spacing: 0.5px; }
-        h2 { font-size: 23px; font-weight: 400; text-align: center; margin-bottom: 10px; }
-        p { font-size: 14px; line-height: 1.5; color: #444; text-align: center; margin-bottom: 15px; }
-        .text-small { font-size: 13px; color: #555; }
-        .text-tiny { font-size: 11px; color: #777; line-height: 1.4; }
-        .text-left { text-align: left; }
-        
-        .btn { 
-            background-color: #2e353a; color: white; border: none; padding: 12px 0; font-size: 15px; 
-            width: 100%; max-width: 280px; text-align: center; cursor: pointer; margin: 6px auto; display: block;
-        }
-        .btn-outline { background-color: transparent; border: 1px solid #2e353a; color: #2e353a; }
-        .btn-disabled { background-color: #dbdbdb; color: #999; cursor: default; }
-        .btn-small { max-width: 200px; }
-        
-        .input-group { margin-bottom: 12px; width: 100%; }
-        .input-field { width: 100%; padding: 11px 12px; border: 1px solid #ccc; background: transparent; font-size: 15px; }
-        .input-field::placeholder { color: #aaa; }
-
-        .checkbox-group { display: flex; align-items: center; font-size: 14px; margin: 8px 0; cursor: pointer; }
-        .custom-checkbox {
-            appearance: none; -webkit-appearance: none;
-            width: 18px; height: 18px;
-            border: 1px solid #222;
-            background-color: transparent;
-            margin-right: 12px;
+        .kindle-device {
+            width: 100vw;
+            height: 100vh;
+            background-color: #ffffff;
+            display: flex;
+            flex-direction: column;
             position: relative;
-            cursor: pointer;
+            overflow: hidden;
+        }
+
+        /* --- Grid/Layout Utility --- */
+        .flex-row { display: flex; align-items: center; }
+        .flex-grow { flex-grow: 1; }
+
+        /* --- Top Navigation Bar --- */
+        .top-nav {
+            height: 48px;
+            min-height: 48px;
+            display: flex;
+            border-bottom: 1px solid #000;
+            background-color: #fff;
             flex-shrink: 0;
+            width: 100%;
+            z-index: 20;
         }
-        .custom-checkbox:checked {
-            background-color: #222;
-            border-color: #222;
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            border-right: 1px solid #000;
+            font-size: 10px;
+            text-align: center;
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+            user-select: none;
         }
-        .custom-checkbox:checked::after {
-            content: '';
-            position: absolute;
-            left: 4px; top: 1px;
-            width: 5px; height: 9px;
-            border: solid white;
-            border-width: 0 2px 2px 0;
-            transform: rotate(45deg);
+        .nav-item:last-child { border-right: none; }
+        .nav-icon {
+            width: 20px; height: 20px; margin-bottom: 2px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .nav-icon img { width: 100%; height: 100%; display: block; }
+
+        .search-container {
+            flex: 2; display: flex; align-items: center; padding: 0 10px;
+            border-right: 1px solid #000; height: 100%; cursor: pointer; user-select: none;
+        }
+        .search-icon { width: 18px; height: 18px; margin-right: 8px; display: flex; align-items: center; justify-content: center; }
+        .search-icon img { width: 100%; height: 100%; display: block; }
+        .search-text { font-size: 16px; color: #000; letter-spacing: 0.5px; }
+
+        .menu-dots {
+            width: 48px; height: 100%; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; cursor: pointer; user-select: none;
+        }
+        .menu-dots img { width: 20px; height: 20px; display: block; }
+
+        /* --- Content Area --- */
+        .content-area {
+            flex: 1;
+            width: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            position: relative;
         }
 
-        .or-divider { display: flex; align-items: center; justify-content: center; width: 100%; margin: 15px 0; color: #666; font-size: 14px; }
-        .or-divider::before, .or-divider::after { content: ""; flex: 1; border-top: 1px solid #ddd; }
-        .or-divider span { padding: 0 15px; }
+        /* --- Dashboard Screen --- */
+        .dashboard-scroll-area { padding: 15px 15px 20px 15px; position: relative; width: 100%; }
+        .section-title { font-size: 13px; font-weight: bold; color: #000; margin-bottom: 12px; display: flex; align-items: center; cursor: pointer; }
+        .title-arrow { font-size: 16px; margin-left: 2px; margin-top: -2px; }
 
-        .tree-container { width: 100%; display: flex; justify-content: center; align-items: flex-end; flex-shrink: 0; margin-top: auto; padding-bottom: 5px; }
-        .tree-container img { max-height: 150px; width: auto; max-width: 100%; display: block; }
+        .library-row { display: flex; gap: 12px; margin-bottom: 25px; width: 100%; }
+        .book-card-large { width: 45%; height: 170px; border: 1px solid #000; background-color: #d6d6d6; position: relative; display: flex; flex-direction: column; justify-content: flex-end; padding: 8px; flex-shrink: 0; }
+        .book-logo-large { position: absolute; top: 10px; left: 10px; width: 40px; height: 40px; }
+        .book-logo-large img { width: 100%; height: 100%; display: block; }
+        .progress-badge-large { position: absolute; top: 0; right: 0; width: 0; height: 0; border-left: 25px solid transparent; border-right: 0 solid transparent; border-top: 25px solid #000; }
+        .progress-badge-large span { position: absolute; top: -22px; right: -16px; color: #fff; font-size: 10px; font-weight: bold; }
+        .book-title-large { font-size: 15px; font-weight: bold; color: #000; line-height: 1.2; }
+        .book-author-large { font-size: 11px; color: #000; margin-top: 2px; }
 
-        .illustration-box { display: flex; justify-content: center; align-items: center; margin: 5px 0 15px 0; flex-shrink: 0; }
-        .illustration-box img { max-height: 110px; width: auto; max-width: 100%; }
+        .book-list-small { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+        .book-item-small { border: 1px solid #000; display: flex; background-color: #d6d6d6; height: 80px; position: relative; width: 100%; }
+        .book-logo-small { width: 35px; height: 45px; margin: 8px; position: relative; flex-shrink: 0; }
+        .book-logo-small img { width: 100%; height: 100%; display: block; }
+        .progress-badge-small { position: absolute; top: 0; right: 0; width: 0; height: 0; border-left: 18px solid transparent; border-right: 0 solid transparent; border-top: 18px solid #000; }
+        .progress-badge-small span { position: absolute; top: -16px; right: -12px; color: #fff; font-size: 8px; font-weight: bold; }
+        .book-meta-small { padding-top: 10px; padding-right: 5px; line-height: 1.1; overflow: hidden; width: 100%; }
+        .book-title-small { font-size: 12px; font-weight: bold; color: #000; word-break: break-all; }
+        .book-author-small { font-size: 10px; color: #000; margin-top: 2px; }
 
-        .country-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0 15px; text-align: center; font-size: 14px; }
-        .country-item { padding: 8px 0; cursor: pointer; border: 1px solid transparent; }
-        .country-item.selected { border: 1px solid #2e353a; }
+        .lists-section { margin-bottom: 25px; width: 100%; }
+        .list-item { font-size: 14px; color: #000; margin-top: 8px; cursor: pointer; }
+        .list-illustration { display: flex; justify-content: center; margin-top: 10px; position: relative; left: 20px; width: 100%; }
+        .list-img-container { width: 100px; height: auto; }
+        .list-img-container img { width: 100%; height: auto; display: block; }
 
-        .payment-tabs { display: flex; border-bottom: 1px solid #ccc; margin-bottom: 15px; }
-        .payment-tab { flex: 1; text-align: center; padding: 10px 0; font-size: 13px; cursor: pointer; }
-        .payment-tab.active { border-bottom: 2px solid #333; font-weight: 500; }
-        .payment-row-flex { display: flex; gap: 10px; margin: 10px 0; }
-        .payment-col { flex: 1; }
-        .payment-col select { width: 100%; padding: 10px; border: 1px solid #ccc; background: transparent; font-size: 14px; }
+        .help-section { border-top: 1px solid #000; padding-top: 15px; margin-bottom: 15px; width: 100%; }
+        .help-row { display: flex; gap: 15px; width: 100%; }
+        .help-img-container { width: 80px; height: 80px; border: 1px solid #000; background-color: #e6e6e6; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .help-img-container img { width: 100%; height: 100%; display: block; object-fit: cover; }
+        .help-content { display: flex; flex-direction: column; justify-content: center; width: 100%; }
+        .help-content p { font-size: 12px; line-height: 1.3; color: #000; margin-bottom: 8px; }
+        .help-btn { border: 1px solid #000; background: #fff; padding: 4px 12px; font-size: 11px; font-family: inherit; color: #000; width: fit-content; cursor: pointer; }
+
+        .bottom-hint { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #000; padding-top: 12px; font-size: 12px; color: #000; margin-top: 5px; cursor: pointer; width: 100%; }
+        .bottom-hint .arrow-down { font-size: 18px; line-height: 1; margin-bottom: 2px; }
+
+        .scrollbar-track { position: absolute; right: 1px; top: 15px; bottom: 20px; width: 10px; background: transparent; pointer-events: none; }
+        .scrollbar-thumb { width: 8px; height: 150px; background-color: #000; position: absolute; top: 50px; right: 1px; pointer-events: none; }
+
+        /* --- Settings Screen --- */
+        .settings-scroll-area { padding: 10px 15px 20px 15px; display: none; width: 100%; }
+        .settings-list-item { display: flex; align-items: center; padding: 14px 0; border-bottom: 1px solid #ccc; cursor: pointer; position: relative; width: 100%; }
+        .settings-list-item:last-child { border-bottom: none; }
+        .settings-icon-wrapper { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; margin-right: 15px; flex-shrink: 0; }
+        .settings-icon-wrapper svg { width: 22px; height: 22px; stroke: #000; stroke-width: 2; fill: none; }
+        .settings-text-wrapper { flex-grow: 1; display: flex; flex-direction: column; min-width: 0; }
+        .settings-title { font-size: 14px; font-weight: bold; color: #000; }
+        .settings-subtitle { font-size: 10px; color: #000; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .settings-arrow { font-size: 20px; color: #000; margin-left: auto; padding-left: 10px; font-weight: 300; flex-shrink: 0; }
+
+        /* --- Search Overlay Components --- */
+        #searchOverlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #fff; display: none; flex-direction: column; z-index: 50;
+        }
+        .search-header { height: 48px; display: flex; border-bottom: 1px solid #000; width: 100%; flex-shrink: 0; }
+        .search-back-btn { width: 48px; height: 100%; display: flex; align-items: center; justify-content: center; border-right: 1px solid #000; cursor: pointer; }
+        .search-back-btn img { width: 20px; height: 20px; display: block; }
+        .search-input-wrapper { flex: 1; display: flex; align-items: center; padding: 0 10px; }
+        .search-input-wrapper input { width: 100%; border: none; outline: none; font-size: 16px; font-family: 'KindleFont', sans-serif; background: transparent; }
+
+        .search-content-area { flex: 1; width: 100%; display: flex; align-items: flex-start; justify-content: center; padding-top: 40px; }
+        .search-hint-box { display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .search-hint-box img { width: 120px; height: auto; display: block; margin-bottom: 20px; }
+        .search-hint-text { font-size: 14px; color: #000; }
+
+        /* Keyboard Container */
+        .keyboard-container {
+            width: 100%; padding: 10px 8px 15px 8px;
+            background: #fff; border-top: 1px solid #000; flex-shrink: 0;
+            transform: translateY(100%); transition: transform 0.2s;
+            transition-timing-function: cubic-bezier(0.55, 0.05, 0.65, 0.45);
+            position: relative;
+        }
+        .keyboard-container.active { transform: translateY(0); }
         
-        .phone-group { display: flex; border: 1px solid #ccc; margin: 15px 0; }
-        .phone-prefix { padding: 10px; border-right: 1px solid #ccc; width: 70px; text-align: center; font-size: 14px; background: #f0f0f0; }
-        .phone-input { flex: 1; border: none; padding: 10px; font-size: 15px; background: transparent; }
-
-        .gr-logo { font-size: 26px; color: #666; text-align: center; margin: 5px 0; font-weight: 300; letter-spacing: 0.5px; }
-        .gr-opt { display: flex; justify-content: space-between; align-items: flex-start; margin: 10px 0; padding: 5px 0; }
-        .gr-opt h4 { font-size: 14px; font-weight: 500; margin: 0; }
-        .gr-opt p { font-size: 12px; text-align: left; color: #666; margin: 2px 0; }
-        .gr-check { font-size: 18px; }
-
-        #modal-overlay {
-            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.4); z-index: 100; justify-content: center; align-items: center;
+        /* Keyboard Rows */
+        .kb-row { display: flex; justify-content: center; margin-bottom: 6px; gap: 4px; width: 100%; }
+        .kb-row.hidden { display: none; }
+        
+        .kb-key {
+            height: 42px; min-width: 30px; flex: 1; max-width: 36px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; font-family: 'KindleFont', sans-serif; color: #000;
+            border: none; background: transparent; cursor: pointer;
+            text-transform: lowercase;
         }
-        #modal-box {
-            background: #ffffff; width: 90%; max-width: 350px; padding: 25px; 
-            display: flex; flex-direction: column; align-items: center;
-        }
-        #modal-box h3 { font-size: 18px; font-weight: 400; text-align: center; margin-bottom: 15px; line-height: 1.4; }
-        #modal-buttons { display: flex; gap: 10px; width: 100%; justify-content: center; margin-top: 10px; }
-        #modal-buttons .btn { max-width: 120px; padding: 10px 0; font-size: 14px; margin: 0; }
-
-        .loading-container {
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            height: 100%; width: 100%;
-        }
-        .loading-container img { max-width: 80%; height: auto; }
-        .loading-text { margin-top: 25px; text-align: center; font-size: 14px; color: #555; }
+        .kb-key.caps-active { text-transform: uppercase; }
+        .kb-key.special { flex: 1.5; max-width: 48px; }
+        .kb-key.wide { flex: 4; max-width: 160px; border: 1px solid #000; background: transparent; font-size: 11px; font-weight: bold; }
+        .kb-key.img-key { flex: 1.5; max-width: 48px; padding: 0; display: flex; align-items: center; justify-content: center; }
+        .kb-key.img-key img { width: 24px; height: 24px; display: block; }
+        .kb-key:active { background-color: #eee; }
+        .kb-bottom-row { margin-top: 4px; }
     </style>
 </head>
 <body>
-
-<div id="app">
-    <!-- ШАГ 1: Приветствие -->
-    <div class="step active" id="step1">
-        <div class="content">
-            <h1>Здравствуйте,</h1>
-            <p>Поздравляем вас с приобретением Kindle Paperwhite!<br>Вы легко можете настроить это устройство. Если на вашем телефоне установлено приложение Kindle, используйте его для упрощения настройки устройства.</p>
-            <button class="btn" onclick="goToStep(2)">Настройка на этом Kindle</button>
-            <div class="or-divider"><span>ИЛИ</span></div>
-            <!-- ЗАПУСК ЗАГРУЗКИ ПО КНОПКЕ ТЕЛЕФОНА -->
-            <button class="btn btn-small" onclick="triggerPhoneLoading()">Настройка с&nbsp;помощью&nbsp;телефона</button>
-            <p class="text-small" style="margin-top: 20px;">У вас нет приложения? Скачайте «Amazon Kindle» для iOS или Android.</p>
+    <div class="kindle-device">
+        <!-- Top Nav -->
+        <div class="top-nav">
+            <div class="nav-item" id="homeBtn">
+                <div class="nav-icon"><img src="homescreenBAR.png" alt="home"></div>главный экран
+            </div>
+            <div class="nav-item" id="backBtn">
+                <div class="nav-icon"><img src="backBAR.png" alt="back"></div>назад
+            </div>
+            <div class="nav-item" id="settingsBtn">
+                <div class="nav-icon"><img src="settingsBAR.png" alt="settings"></div>настройки
+            </div>
+            <div class="nav-item">
+                <div class="nav-icon"><img src="storeBAR.png" alt="store"></div>магазин
+            </div>
+            <div class="search-container" id="searchOpenBtn">
+                <div class="search-icon"><img src="searchBAR.png" alt="search"></div><span class="search-text">Поиск</span>
+            </div>
+            <div class="menu-dots"><img src="troetoBAR.png" alt="menu"></div>
         </div>
-        <div class="tree-container"><img src="downthere.jpeg" alt="Дерево"></div>
+
+        <!-- Content Area -->
+        <div class="content-area" id="scrollContainer">
+            <div id="dashboardView" class="dashboard-scroll-area">
+                <div class="section-title"><span>ВАША БИБЛИОТЕКА</span><span class="title-arrow">›</span></div>
+                <div class="library-row">
+                    <div class="book-card-large">
+                        <div class="book-logo-large"><img src="booklable.png" alt="Book"></div>
+                        <div class="progress-badge-large"><span>1%</span></div>
+                        <div class="book-title-large">Граф Монте-Кристо</div>
+                        <div class="book-author-large">Александр Дюма</div>
+                    </div>
+                    <div class="book-list-small">
+                        <div class="book-item-small">
+                            <div class="book-logo-small"><img src="booklable.png" alt="Book"></div>
+                            <div class="progress-badge-small"><span>0%</span></div>
+                            <div class="book-meta-small"><div class="book-title-small">Duma_A_G<br>raf_Monte...</div><div class="book-author-small">Александр...</div></div>
+                        </div>
+                        <div class="book-item-small">
+                            <div class="book-logo-small"><img src="booklable.png" alt="Book"></div>
+                            <div class="progress-badge-small"><span>0%</span></div>
+                            <div class="book-meta-small"><div class="book-title-small">Duma_A_G<br>raf_Monte...</div><div class="book-author-small">Александр...</div></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="lists-section">
+                    <div class="section-title"><span>СПИСКИ КНИГ</span><span class="title-arrow">›</span></div>
+                    <div class="list-item">Начните вести список книг <span class="title-arrow">›</span></div>
+                    <div class="list-illustration"><div class="list-img-container"><img src="spis.png" alt="Books list"></div></div>
+                </div>
+                <div class="help-section">
+                    <div class="section-title"><span>Узнайте все о Kindle</span><span class="title-arrow">›</span></div>
+                    <div class="help-row">
+                        <div class="help-img-container"><img src="learn.png" alt="Learn Kindle"></div>
+                        <div class="help-content"><p>Ознакомьтесь с возможностями<br>устройства Kindle и узнайте, как<br>перемещаться по его функциям</p><button class="help-btn">Подробнее</button></div>
+                    </div>
+                </div>
+                <div class="bottom-hint"><span>Проведите пальцем вверх, чтобы увидеть другие предложения.</span><span class="arrow-down">⌄</span></div>
+                <div class="scrollbar-track"><div class="scrollbar-thumb"></div></div>
+            </div>
+
+            <div id="settingsView" class="settings-scroll-area">
+                <div class="settings-list-item"><div class="settings-icon-wrapper"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div><div class="settings-text-wrapper"><div class="settings-title">Ваша учетная запись</div><div class="settings-subtitle">не зарегистрировано</div></div><div class="settings-arrow">›</div></div>
+                <div class="settings-list-item"><div class="settings-icon-wrapper"><svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg></div><div class="settings-text-wrapper"><div class="settings-title">Беспроводная связь</div></div><div class="settings-arrow">›</div></div>
+                <div class="settings-list-item"><div class="settings-icon-wrapper"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg></div><div class="settings-text-wrapper"><div class="settings-title">Параметры устройства</div></div><div class="settings-arrow">›</div></div>
+                <div class="settings-list-item"><div class="settings-icon-wrapper"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></div><div class="settings-text-wrapper"><div class="settings-title">Параметры чтения</div></div><div class="settings-arrow">›</div></div>
+                <div class="settings-list-item"><div class="settings-icon-wrapper"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path><path d="M2 12h20"></path></svg></div><div class="settings-text-wrapper"><div class="settings-title">Язык и словари</div></div><div class="settings-arrow">›</div></div>
+                <div class="settings-list-item"><div class="settings-icon-wrapper"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="2" x2="12" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line></svg></div><div class="settings-text-wrapper"><div class="settings-title">Специальные возможности</div></div><div class="settings-arrow">›</div></div>
+                <div class="settings-list-item"><div class="settings-icon-wrapper"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div><div class="settings-text-wrapper"><div class="settings-title">Справка и руководства пользователя</div></div><div class="settings-arrow">›</div></div>
+            </div>
+        </div>
+
+        <!-- Search Overlay -->
+        <div id="searchOverlay">
+            <div class="search-header">
+                <div class="search-back-btn" id="searchCloseBtn"><img src="backBAR.png" alt="back"></div>
+                <div class="search-input-wrapper"><input type="text" id="searchInput" placeholder="Поиск" autocomplete="off"></div>
+            </div>
+            <div class="search-content-area" id="searchHintArea">
+                <div class="search-hint-box"><img src="searchhint.png" alt="Hint"><div class="search-hint-text">Начните искать книги или предложения на Amazon</div></div>
+            </div>
+
+            <!-- Keyboard Main -->
+            <div class="keyboard-container" id="customKeyboard">
+                <!-- Page 0: RU -->
+                <div id="kbPage0" class="kb-page">
+                    <div class="kb-row">
+                        <button class="kb-key" data-value="й">й</button><button class="kb-key" data-value="ц">ц</button><button class="kb-key" data-value="у">у</button><button class="kb-key" data-value="к">к</button><button class="kb-key" data-value="е">е</button><button class="kb-key" data-value="н">н</button><button class="kb-key" data-value="г">г</button><button class="kb-key" data-value="ш">ш</button><button class="kb-key" data-value="щ">щ</button><button class="kb-key" data-value="з">з</button><button class="kb-key" data-value="х">х</button><button class="kb-key" data-value="ъ">ъ</button>
+                    </div>
+                    <div class="kb-row">
+                        <button class="kb-key" data-value="ф">ф</button><button class="kb-key" data-value="ы">ы</button><button class="kb-key" data-value="в">в</button><button class="kb-key" data-value="а">а</button><button class="kb-key" data-value="п">п</button><button class="kb-key" data-value="р">р</button><button class="kb-key" data-value="о">о</button><button class="kb-key" data-value="л">л</button><button class="kb-key" data-value="д">д</button><button class="kb-key" data-value="ж">ж</button><button class="kb-key" data-value="э">э</button>
+                    </div>
+                    <div class="kb-row">
+                        <button class="kb-key img-key" id="kbCapsRU"><img src="keybcapslock.png" alt="Caps"></button>
+                        <button class="kb-key" data-value="я">я</button><button class="kb-key" data-value="ч">ч</button><button class="kb-key" data-value="с">с</button><button class="kb-key" data-value="м">м</button><button class="kb-key" data-value="и">и</button><button class="kb-key" data-value="т">т</button><button class="kb-key" data-value="ь">ь</button><button class="kb-key" data-value="б">б</button><button class="kb-key" data-value="ю">ю</button><button class="kb-key" data-value="ё">ё</button>
+                        <button class="kb-key img-key" id="kbBackspace"><img src="keybbackspace.png" alt="Bksp"></button>
+                    </div>
+                    <div class="kb-row kb-bottom-row">
+                        <button class="kb-key special" id="kbNums">123</button>
+                        <button class="kb-key img-key" id="kbLangRU"><img src="keybswitchlang.png" alt="Lang"></button>
+                        <button class="kb-key wide" id="kbSpace">ПРОБЕЛ</button>
+                        <button class="kb-key special" data-value=".">.</button>
+                        <button class="kb-key img-key" id="kbEnter"><img src="keybenter.png" alt="Enter"></button>
+                    </div>
+                </div>
+
+                <!-- Page 1: EN -->
+                <div id="kbPage1" class="kb-page" style="display: none;">
+                    <div class="kb-row">
+                        <button class="kb-key" data-value="q">q</button><button class="kb-key" data-value="w">w</button><button class="kb-key" data-value="e">e</button><button class="kb-key" data-value="r">r</button><button class="kb-key" data-value="t">t</button><button class="kb-key" data-value="y">y</button><button class="kb-key" data-value="u">u</button><button class="kb-key" data-value="i">i</button><button class="kb-key" data-value="o">o</button><button class="kb-key" data-value="p">p</button>
+                    </div>
+                    <div class="kb-row">
+                        <button class="kb-key" data-value="a">a</button><button class="kb-key" data-value="s">s</button><button class="kb-key" data-value="d">d</button><button class="kb-key" data-value="f">f</button><button class="kb-key" data-value="g">g</button><button class="kb-key" data-value="h">h</button><button class="kb-key" data-value="j">j</button><button class="kb-key" data-value="k">k</button><button class="kb-key" data-value="l">l</button>
+                    </div>
+                    <div class="kb-row">
+                        <button class="kb-key img-key" id="kbCapsEN"><img src="keybcapslock.png" alt="Caps"></button>
+                        <button class="kb-key" data-value="z">z</button><button class="kb-key" data-value="x">x</button><button class="kb-key" data-value="c">c</button><button class="kb-key" data-value="v">v</button><button class="kb-key" data-value="b">b</button><button class="kb-key" data-value="n">n</button><button class="kb-key" data-value="m">m</button>
+                        <button class="kb-key img-key" id="kbBackspaceEN"><img src="keybbackspace.png" alt="Bksp"></button>
+                    </div>
+                    <div class="kb-row kb-bottom-row">
+                        <button class="kb-key special" id="kbNumsEN">123</button>
+                        <button class="kb-key img-key" id="kbLangEN"><img src="keybswitchlang.png" alt="Lang"></button>
+                        <button class="kb-key wide" id="kbSpaceEN">SPACE</button>
+                        <button class="kb-key special" data-value=".">.</button>
+                        <button class="kb-key img-key" id="kbEnterEN"><img src="keybenter.png" alt="Enter"></button>
+                    </div>
+                </div>
+
+                <!-- Page 2: NUM/SYM -->
+                <div id="kbPage2" class="kb-page" style="display: none;">
+                    <div class="kb-row">
+                        <button class="kb-key" data-value="1">1</button><button class="kb-key" data-value="2">2</button><button class="kb-key" data-value="3">3</button><button class="kb-key" data-value="4">4</button><button class="kb-key" data-value="5">5</button><button class="kb-key" data-value="6">6</button><button class="kb-key" data-value="7">7</button><button class="kb-key" data-value="8">8</button><button class="kb-key" data-value="9">9</button><button class="kb-key" data-value="0">0</button>
+                    </div>
+                    <div class="kb-row">
+                        <button class="kb-key" data-value="-">-</button><button class="kb-key" data-value="/">/</button><button class="kb-key" data-value=":">:</button><button class="kb-key" data-value=";">;</button><button class="kb-key" data-value="(">(</button><button class="kb-key" data-value=")">)</button><button class="kb-key" data-value="$">$</button><button class="kb-key" data-value="&">&</button><button class="kb-key" data-value="@">@</button><button class="kb-key" data-value="“">“</button>
+                    </div>
+                    <div class="kb-row">
+                        <button class="kb-key special" id="kbBackNum">ABC</button>
+                        <button class="kb-key" data-value="!">!</button><button class="kb-key" data-value="?">?</button><button class="kb-key" data-value=",">,</button><button class="kb-key" data-value=".">.</button><button class="kb-key" data-value="'">'</button>
+                        <button class="kb-key img-key" id="kbBackspaceNUM"><img src="keybbackspace.png" alt="Bksp"></button>
+                    </div>
+                    <div class="kb-row kb-bottom-row">
+                        <button class="kb-key special" id="kbNumsBack">123</button>
+                        <button class="kb-key wide" id="kbSpaceNUM">ПРОБЕЛ</button>
+                        <button class="kb-key img-key" id="kbEnterNUM"><img src="keybenter.png" alt="Enter"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- ШАГ 2: Регистрация (С возвращенным текстом) -->
-    <div class="step" id="step2">
-        <div class="content">
-            <h2>Регистрация Kindle</h2>
-            <p class="text-small" style="margin-bottom: 20px;">Введите данные учетной записи Amazon, чтобы добавить Kindle в учетную запись Amazon.</p>
-            <div class="input-group"><input type="text" class="input-field" placeholder="Электронная почта или номер телефона"></div>
-            <div class="input-group"><input type="password" id="regPassword" class="input-field" placeholder="Пароль"></div>
-            <label class="checkbox-group">
-                <input type="checkbox" id="hidePassReg" class="custom-checkbox" onchange="togglePassword('regPassword', 'hidePassReg')" checked>
-                <span>Скрыть пароль</span>
-            </label>
-            <div style="display: flex; gap: 10px; margin: 15px 0;">
-                <button class="btn btn-outline" onclick="goToStep(3)" style="padding: 10px 0;">Создать новую уч. запись</button>
-                <button class="btn btn-disabled" style="padding: 10px 0; max-width: 100px;">Войти</button>
-            </div>
+    <script>
+        const dashboardView = document.getElementById('dashboardView');
+        const settingsView = document.getElementById('settingsView');
+        const scrollContainer = document.getElementById('scrollContainer');
+        const searchOverlay = document.getElementById('searchOverlay');
+        const searchInput = document.getElementById('searchInput');
+        const keyboard = document.getElementById('customKeyboard');
+        const kbPage0 = document.getElementById('kbPage0');
+        const kbPage1 = document.getElementById('kbPage1');
+        const kbPage2 = document.getElementById('kbPage2');
+
+        let currentPage = 0; // 0: RU, 1: EN, 2: NUM
+        let isCaps = false;
+
+        function showDashboard() { dashboardView.style.display = 'block'; settingsView.style.display = 'none'; scrollContainer.scrollTop = 0; }
+        function showSettings() { dashboardView.style.display = 'none'; settingsView.style.display = 'block'; scrollContainer.scrollTop = 0; }
+
+        document.getElementById('searchOpenBtn').addEventListener('click', function() {
+            searchOverlay.style.display = 'flex'; searchInput.value = ''; searchInput.focus();
+            setTimeout(function() { keyboard.classList.add('active'); }, 10);
+        });
+
+        document.getElementById('searchCloseBtn').addEventListener('click', function() {
+            keyboard.classList.remove('active');
+            setTimeout(function() { searchOverlay.style.display = 'none'; }, 200);
+        });
+
+        // Page Switching
+        function switchKeyboardPage(pageIndex) {
+            kbPage0.style.display = 'none';
+            kbPage1.style.display = 'none';
+            kbPage2.style.display = 'none';
             
-            <!-- ВОЗВРАЩЕННЫЙ ТЕКСТ ЛИЦЕНЗИИ -->
-            <p class="text-tiny text-left" style="margin-top: 15px;">
-                Нажимая «Войти» или «Создать новую учетную запись», вы принимаете <u>«Условия использования Amazon»</u> и все условия, размещенные по адресу www.amazon.com/devicesupport. См. Уведомление о конфиденциальности Amazon, выбрав свою страну и нажав «Конфиденциальность».
-            </p>
-        </div>
-    </div>
-
-    <!-- ШАГ 3: Страна -->
-    <div class="step" id="step3">
-        <div class="content">
-            <h2>Создать учетную запись Amazon</h2>
-            <p class="text-small">Выберите страну своего проживания в списке ниже.</p>
-            <div class="country-grid">
-                <div class="country-item" onclick="selectCountry(this)">Соединенные Штаты</div>
-                <div class="country-item" onclick="selectCountry(this)">Великобритания</div>
-                <div class="country-item" onclick="selectCountry(this)">Япония</div>
-                <div class="country-item" onclick="selectCountry(this)">Китай</div>
-                <div class="country-item" onclick="selectCountry(this)">Канада</div>
-                <div class="country-item" onclick="selectCountry(this)">Италия</div>
-                <div class="country-item" onclick="selectCountry(this)">Германия</div>
-                <div class="country-item" onclick="selectCountry(this)">Франция</div>
-                <div class="country-item" onclick="selectCountry(this)">Бразилия</div>
-                <div class="country-item" onclick="selectCountry(this)">Испания</div>
-                <div class="country-item" onclick="selectCountry(this)">Мексика</div>
-                <div class="country-item" onclick="selectCountry(this)">Индия</div>
-                <div class="country-item" onclick="selectCountry(this)">Австралия</div>
-                <div class="country-item" onclick="selectCountry(this)">Нидерланды</div>
-                <div class="country-item" onclick="selectCountry(this)">Колумбия</div>
-                <div class="country-item" onclick="selectCountry(this)">Чили</div>
-                <div class="country-item" onclick="selectCountry(this)">Аргентина</div>
-                <div class="country-item" onclick="selectCountry(this)">Прочее</div>
-            </div>
-            <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button class="btn btn-outline" onclick="goToStep(2)" style="padding: 10px 20px; max-width: 120px;">Отмена</button>
-                <button class="btn" onclick="goToStep(4)" style="padding: 10px 20px; max-width: 120px;">Далее</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ШАГ 4: Создание учетки -->
-    <div class="step" id="step4">
-        <div class="content">
-            <h2>Создать учетную запись<br>Amazon</h2>
-            <p class="text-small">Введите сведения, которые хотите использовать для входа в Amazon.</p>
-            <div class="input-group"><input type="text" id="fullNameInput" class="input-field" placeholder="Имя и фамилия"></div>
-            <div class="input-group"><input type="text" class="input-field" placeholder="Адрес вашей электронной почты"></div>
-            <div class="input-group">
-                <input type="password" id="createPassword" class="input-field" placeholder="Создание пароля">
-                <p class="text-tiny text-left" style="margin-top: 5px;">Пароль должен содержать не менее 6 символов.</p>
-            </div>
-            <label class="checkbox-group" style="margin-bottom: 20px;">
-                <input type="checkbox" id="showPassCheck" class="custom-checkbox" onchange="togglePassword('createPassword', 'showPassCheck')">
-                <span id="showPassText">Показать пароль</span>
-            </label>
-            <button class="btn" onclick="saveAndGoToStep5()" style="margin-top: 10px;">Далее</button>
-            <button class="btn btn-outline" onclick="goToStep(3)" style="background: white;">Отмена</button>
-        </div>
-    </div>
-
-    <!-- ШАГ 5: Оплата -->
-    <div class="step" id="step5">
-        <div class="content">
-            <h2>Добавление способа оплаты</h2>
-            <p class="text-small" id="payment-desc">Добавьте карту и сохраните для будущих покупок в магазине Kindle.</p>
-            <div class="payment-tabs">
-                <div class="payment-tab active" onclick="switchPaymentTab('bank')">Добавление банковской карты</div>
-                <div class="payment-tab" onclick="switchPaymentTab('gift')">Добавление подарочной карты</div>
-            </div>
-            <div id="bank-form">
-                <div class="input-group"><input type="text" class="input-field" placeholder="Имя на карте"></div>
-                <div class="input-group"><input type="text" class="input-field" placeholder="Номер карты"></div>
-                <div class="payment-row-flex">
-                    <div class="payment-col"><select><option>01</option><option>02</option></select></div>
-                    <div class="payment-col"><select><option>2024</option><option>2025</option></select></div>
-                    <div class="payment-col"><input type="text" class="input-field" placeholder="CVC" style="padding: 10px;"></div>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-                    <button class="btn btn-outline" onclick="goToStep(6)" style="max-width: 140px; padding: 10px 0;">Настроить позже</button>
-                    <button class="btn" style="max-width: 140px; padding: 10px 0;">Добавить карту</button>
-                </div>
-            </div>
-            <div id="gift-form" style="display: none;">
-                <div class="input-group"><input type="text" id="gift-code" class="input-field" placeholder="Введите код подарочной карты"></div>
-                <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
-                    <button class="btn" id="apply-gift-btn" onclick="applyGiftCard()" style="max-width: 200px; padding: 10px 0;">Применить код</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ШАГ 6: Приветствие -->
-    <div class="step" id="step6">
-        <div class="content">
-            <h1 id="greetingHeader">Привет, Иван</h1>
-            <p>Поздравляем вас с приобретением Kindle Paperwhite!<br>Вы вошли в систему и подключились к 5G.</p>
-            <button class="btn" onclick="goToStep(7)" style="max-width: 150px;">Далее</button>
-            <div class="or-divider" style="margin: 30px 0 15px 0;"></div>
-            <p class="text-small">Вы не <span id="nameInQuestion">Иван</span> ?</p>
-            <button class="btn btn-outline" onclick="showAccountModal()" style="max-width: 260px; padding: 12px 0; background: white;">Использовать другую учетную запись</button>
-        </div>
-        <div class="tree-container"><img src="downthere.jpeg" alt="Дерево"></div>
-    </div>
-
-    <!-- ШАГ 7: Приложение -->
-    <div class="step" id="step7">
-        <div class="content">
-            <div class="illustration-box"><img src="kindle_app_icon.png" alt="Иконка Kindle" style="max-height: 70px;"></div>
-            <h2>Получить приложение Kindle</h2>
-            <p class="text-small">Получайте важные оповещения и синхронизируйте библиотеку.</p>
-            <p class="text-small"><b>Введите номер телефона ниже.</b></p>
-            <div class="phone-group">
-                <div class="phone-prefix">US (+1) ▼</div>
-                <input type="text" class="phone-input" placeholder="Номер телефона">
-            </div>
-            <div style="display: flex; justify-content: space-between;">
-                <button class="btn btn-outline" onclick="goToStep(8)" style="max-width: 120px; padding: 10px 0;">Нет, спасибо</button>
-                <button class="btn btn-disabled" style="max-width: 160px; padding: 10px 0;">Пришлите мне ссылку</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ШАГ 8: Goodreads -->
-    <div class="step" id="step8">
-        <div class="content">
-            <div class="illustration-box"><img src="goodreads_illustration.png" alt="Goodreads"></div>
-            <div class="gr-logo">goodreads</div>
-            <p class="text-small">Станьте частью крупнейшего сообщества любителей книг.</p>
-            <div class="gr-opt">
-                <div><h4>Создать уч. запись с помощью уч. данных Amazon</h4><p>Используйте уч. запись Amazon для входа в Goodreads.</p></div>
-                <div class="gr-check">✓</div>
-            </div>
-            <div class="gr-opt" style="border-top: 1px solid #eee; padding-top: 15px;">
-                <div><h4>Войдите в систему с помощью другого адреса электронной почты</h4></div>
-            </div>
-            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
-                <button class="btn btn-outline" style="max-width: 120px; padding: 10px 0; background: white;">Нет, спасибо</button>
-                <button class="btn" style="max-width: 100px; padding: 10px 0;">Далее</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Экран Загрузки -->
-    <div class="step" id="stepLoading">
-        <div class="content">
-            <div class="loading-container">
-                <img id="loaderImage" src="load1.png" alt="Загрузка">
-                <div class="loading-text">Инициализация устройства...</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Модальное окно -->
-<div id="modal-overlay">
-    <div id="modal-box">
-        <h3 id="modalMessage">Сообщение</h3>
-        <div id="modal-buttons">
-            <button class="btn" id="modalActionBtn" onclick="closeModal()">Хорошо</button>
-        </div>
-    </div>
-</div>
-
-<script>
-    let currentName = "Иван";
-    let isLoadingActive = false;
-    let loaderTimer = null;
-
-    window.onload = function() {
-        const storedName = localStorage.getItem('kindleUserName');
-        if (storedName) {
-            currentName = storedName;
-            updateGreeting();
+            if (pageIndex === 0) kbPage0.style.display = 'block';
+            else if (pageIndex === 1) kbPage1.style.display = 'block';
+            else if (pageIndex === 2) kbPage2.style.display = 'block';
+            currentPage = pageIndex;
         }
-    };
 
-    function goToStep(id) {
-        if(isLoadingActive) return;
-        document.querySelectorAll('#app .step').forEach(el => el.classList.remove('active'));
-        document.getElementById('step' + id).classList.add('active');
-        closeModal();
-    }
-
-    function selectCountry(element) {
-        document.querySelectorAll('.country-item').forEach(el => el.classList.remove('selected'));
-        element.classList.add('selected');
-    }
-
-    function saveAndGoToStep5() {
-        const nameInput = document.getElementById('fullNameInput').value.trim();
-        if(nameInput) {
-            localStorage.setItem('kindleUserName', nameInput);
-            currentName = nameInput;
-            updateGreeting();
+        // Update Caps state visual
+        function updateCapsState() {
+            const pages = [kbPage0, kbPage1, kbPage2];
+            pages.forEach(page => {
+                if(page.style.display !== 'none') {
+                    const letterKeys = page.querySelectorAll('.kb-key[data-value]');
+                    letterKeys.forEach(key => {
+                        if(key.classList.contains('img-key')) return;
+                        if(isCaps) {
+                            key.classList.add('caps-active');
+                        } else {
+                            key.classList.remove('caps-active');
+                        }
+                    });
+                }
+            });
         }
-        goToStep(5);
-    }
 
-    function updateGreeting() {
-        const header = document.getElementById('greetingHeader');
-        const question = document.getElementById('nameInQuestion');
-        if(header) header.innerText = `Привет, ${currentName}`;
-        if(question) question.innerText = currentName;
-    }
-
-    function togglePassword(inputId, checkboxId) {
-        const input = document.getElementById(inputId);
-        const checkbox = document.getElementById(checkboxId);
-        const textSpan = document.getElementById('showPassText');
-        if(checkbox.checked) {
-            input.type = "password";
-            if(textSpan) textSpan.innerText = "Скрыть пароль";
-        } else {
-            input.type = "text";
-            if(textSpan) textSpan.innerText = "Показать пароль";
+        // Add text to input
+        function addChar(char) {
+            if(isCaps) char = char.toUpperCase();
+            searchInput.value += char;
+            searchInput.focus();
         }
-    }
 
-    function switchPaymentTab(type) {
-        const tabs = document.querySelectorAll('.payment-tab');
-        tabs.forEach(t => t.classList.remove('active'));
-        if(type === 'bank') {
-            tabs[0].classList.add('active');
-            document.getElementById('bank-form').style.display = 'block';
-            document.getElementById('gift-form').style.display = 'none';
-        } else {
-            tabs[1].classList.add('active');
-            document.getElementById('bank-form').style.display = 'none';
-            document.getElementById('gift-form').style.display = 'block';
-        }
-    }
+        // Keyboard Logic
+        keyboard.addEventListener('click', function(e) {
+            const target = e.target.closest('.kb-key');
+            if (!target) return;
 
-    function applyGiftCard() {
-        if(isLoadingActive) return;
-        const input = document.getElementById('gift-code');
-        const btn = document.getElementById('apply-gift-btn');
-        if (!input.value.trim()) return;
-        btn.disabled = true; btn.innerText = "Подключаюсь...";
-        setTimeout(() => {
-            btn.innerText = "Применить код"; btn.disabled = false;
-            showErrorModal("Неверный код подарочной карты.");
-        }, 1000);
-    }
-
-    // --- ЛОГИКА ЗАГРУЗКИ ДЛЯ КНОПКИ ТЕЛЕФОНА ---
-    function triggerPhoneLoading() {
-        if (isLoadingActive) return;
-        isLoadingActive = true;
-
-        document.querySelectorAll('#app .step').forEach(el => el.classList.remove('active'));
-        document.getElementById('stepLoading').classList.add('active');
-        
-        const loaderImg = document.getElementById('loaderImage');
-        let progress = 0;
-        const totalTime = 5000; 
-        const intervalTime = totalTime / 7;
-
-        if(loaderTimer) clearInterval(loaderTimer);
-
-        loaderTimer = setInterval(() => {
-            progress++;
-            loaderImg.src = `load${progress}.png`;
-            
-            if (progress >= 7) {
-                clearInterval(loaderTimer);
-                loaderTimer = null;
-                isLoadingActive = false;
-                
-                // ВЫДАЕМ ОШИБКУ ПОСЛЕ ЗАГРУЗКИ
-                const errorText = "Unfortunately, registering a new Kindle device through the app is currently unavailable in your region. Try activating the device without going through the app setup. For more information, see www.amazon.com/gp/help/customer/display.html?nodeId=GCBBSZMUXA6U2P8R";
-                showErrorModal(errorText);
+            // Common actions (Backspace, Space, Enter, .)
+            if (target.id === 'kbBackspace' || target.id === 'kbBackspaceEN' || target.id === 'kbBackspaceNUM') {
+                searchInput.value = searchInput.value.slice(0, -1);
+                searchInput.focus();
+                return;
             }
-        }, intervalTime);
-    }
+            if (target.id === 'kbSpace' || target.id === 'kbSpaceEN' || target.id === 'kbSpaceNUM') {
+                searchInput.value += ' ';
+                searchInput.focus();
+                return;
+            }
+            if (target.id === 'kbEnter' || target.id === 'kbEnterEN' || target.id === 'kbEnterNUM') {
+                alert('Поиск по запросу: "' + searchInput.value + '"');
+                return;
+            }
 
-    function showErrorModal(message) {
-        const overlay = document.getElementById('modal-overlay');
-        const msgBox = document.getElementById('modalMessage');
-        const btn = document.getElementById('modalActionBtn');
-        msgBox.innerText = message;
-        btn.onclick = function() { closeModal(); goToStep(1); };
-        overlay.style.display = 'flex';
-    }
+            // Page specific actions
+            if (target.id === 'kbNums' || target.id === 'kbNumsEN') {
+                isCaps = false;
+                updateCapsState();
+                switchKeyboardPage(2);
+                return;
+            }
+            if (target.id === 'kbNumsBack' || target.id === 'kbBackNum') {
+                switchKeyboardPage(0); // Returns to RU
+                return;
+            }
 
-    function showAccountModal() {
-        const overlay = document.getElementById('modal-overlay');
-        const msgBox = document.getElementById('modalMessage');
-        const btn = document.getElementById('modalActionBtn');
-        msgBox.innerText = `Вы действительно хотите больше не представляться системе Kindle как ${currentName}? Вы будете должны указать данные другой учетной записи Amazon, чтобы продолжить`;
-        btn.onclick = function() {
-            closeModal();
-            localStorage.removeItem('kindleUserName');
-            currentName = "Иван";
-            updateGreeting();
-            goToStep(2);
-        };
-        overlay.style.display = 'flex';
-    }
+            // Lang Switch
+            if (target.id === 'kbLangRU') {
+                switchKeyboardPage(1);
+                return;
+            }
+            if (target.id === 'kbLangEN') {
+                switchKeyboardPage(0);
+                return;
+            }
 
-    function closeModal() {
-        document.getElementById('modal-overlay').style.display = 'none';
-    }
+            // Caps Lock
+            if (target.id === 'kbCapsRU' || target.id === 'kbCapsEN') {
+                isCaps = !isCaps;
+                updateCapsState();
+                return;
+            }
 
-</script>
+            // Data value keys
+            const val = target.getAttribute('data-value');
+            if (val) {
+                if(currentPage === 0 && val === 'ё') {
+                    addChar('ё');
+                } else {
+                    addChar(val);
+                }
+            }
+        });
 
+        document.getElementById('homeBtn').addEventListener('click', showDashboard);
+        document.getElementById('backBtn').addEventListener('click', showDashboard);
+        document.getElementById('settingsBtn').addEventListener('click', showSettings);
+
+        let touchStartY = 0;
+        scrollContainer.addEventListener('touchstart', function(e) { touchStartY = e.touches[0].clientY; });
+        scrollContainer.addEventListener('touchend', function(e) {
+            if (dashboardView.style.display !== 'none') {
+                let touchEndY = e.changedTouches[0].clientY;
+                if (touchStartY - touchEndY > 50) alert('Открытие других предложений (функция-заглушка)');
+            }
+        });
+
+        showDashboard();
+    </script>
 </body>
 </html>
