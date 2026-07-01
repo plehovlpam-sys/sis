@@ -164,8 +164,10 @@
         .search-header { height: 48px; display: flex; border-bottom: 1px solid #000; width: 100%; flex-shrink: 0; }
         .search-back-btn { width: 48px; height: 100%; display: flex; align-items: center; justify-content: center; border-right: 1px solid #000; cursor: pointer; }
         .search-back-btn img { width: 20px; height: 20px; display: block; }
-        .search-input-wrapper { flex: 1; display: flex; align-items: center; padding: 0 10px; }
-        .search-input-wrapper input { width: 100%; border: none; outline: none; font-size: 16px; font-family: 'KindleFont', sans-serif; background: transparent; }
+        
+        /* Заменяем input на div, чтобы не вызывать системную клавиатуру */
+        .search-display-wrapper { flex: 1; display: flex; align-items: center; padding: 0 10px; cursor: text; }
+        .search-display-text { width: 100%; border: none; outline: none; font-size: 16px; font-family: 'KindleFont', sans-serif; background: transparent; white-space: pre-wrap; word-wrap: break-word; min-height: 24px; color: #000; }
 
         .search-content-area { flex: 1; width: 100%; display: flex; align-items: flex-start; justify-content: center; padding-top: 40px; }
         .search-hint-box { display: flex; flex-direction: column; align-items: center; text-align: center; }
@@ -279,7 +281,10 @@
         <div id="searchOverlay">
             <div class="search-header">
                 <div class="search-back-btn" id="searchCloseBtn"><img src="backBAR.png" alt="back"></div>
-                <div class="search-input-wrapper"><input type="text" id="searchInput" placeholder="Поиск" autocomplete="off"></div>
+                <!-- Изменено: input заменен на div -->
+                <div class="search-display-wrapper" id="searchDisplayWrapper">
+                    <div class="search-display-text" id="searchDisplayText">Поиск</div>
+                </div>
             </div>
             <div class="search-content-area" id="searchHintArea">
                 <div class="search-hint-box"><img src="searchhint.png" alt="Hint"><div class="search-hint-text">Начните искать книги или предложения на Amazon</div></div>
@@ -359,7 +364,8 @@
         const settingsView = document.getElementById('settingsView');
         const scrollContainer = document.getElementById('scrollContainer');
         const searchOverlay = document.getElementById('searchOverlay');
-        const searchInput = document.getElementById('searchInput');
+        const searchDisplay = document.getElementById('searchDisplayText');
+        const searchWrapper = document.getElementById('searchDisplayWrapper');
         const keyboard = document.getElementById('customKeyboard');
         const kbPage0 = document.getElementById('kbPage0');
         const kbPage1 = document.getElementById('kbPage1');
@@ -372,13 +378,20 @@
         function showSettings() { dashboardView.style.display = 'none'; settingsView.style.display = 'block'; scrollContainer.scrollTop = 0; }
 
         document.getElementById('searchOpenBtn').addEventListener('click', function() {
-            searchOverlay.style.display = 'flex'; searchInput.value = ''; searchInput.focus();
+            searchOverlay.style.display = 'flex';
+            if(searchDisplay.innerText === 'Поиск') { searchDisplay.innerText = ''; }
+            // Убираем возможность фокуса для предотвращения системной клавиатуры
             setTimeout(function() { keyboard.classList.add('active'); }, 10);
         });
 
         document.getElementById('searchCloseBtn').addEventListener('click', function() {
             keyboard.classList.remove('active');
             setTimeout(function() { searchOverlay.style.display = 'none'; }, 200);
+        });
+
+        // Клик по полю поиска (просто чтобы показать, что оно активно, системная клавиатура не вылезет)
+        searchWrapper.addEventListener('click', function() {
+            // Проверяем, открыта ли клавиатура, если нет - можно мигнуть или просто ничего не делать
         });
 
         // Page Switching
@@ -411,11 +424,12 @@
             });
         }
 
-        // Add text to input
+        // Add text to display
         function addChar(char) {
             if(isCaps) char = char.toUpperCase();
-            searchInput.value += char;
-            searchInput.focus();
+            let currentText = searchDisplay.innerText;
+            if(currentText === 'Поиск') { currentText = ''; }
+            searchDisplay.innerText = currentText + char;
         }
 
         // Keyboard Logic
@@ -425,17 +439,19 @@
 
             // Common actions (Backspace, Space, Enter, .)
             if (target.id === 'kbBackspace' || target.id === 'kbBackspaceEN' || target.id === 'kbBackspaceNUM') {
-                searchInput.value = searchInput.value.slice(0, -1);
-                searchInput.focus();
+                let currentText = searchDisplay.innerText;
+                if(currentText === 'Поиск') { currentText = ''; }
+                searchDisplay.innerText = currentText.slice(0, -1);
                 return;
             }
             if (target.id === 'kbSpace' || target.id === 'kbSpaceEN' || target.id === 'kbSpaceNUM') {
-                searchInput.value += ' ';
-                searchInput.focus();
+                let currentText = searchDisplay.innerText;
+                if(currentText === 'Поиск') { currentText = ''; }
+                searchDisplay.innerText = currentText + ' ';
                 return;
             }
             if (target.id === 'kbEnter' || target.id === 'kbEnterEN' || target.id === 'kbEnterNUM') {
-                alert('Поиск по запросу: "' + searchInput.value + '"');
+                alert('Поиск по запросу: "' + searchDisplay.innerText + '"');
                 return;
             }
 
