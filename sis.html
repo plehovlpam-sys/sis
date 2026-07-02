@@ -79,22 +79,22 @@
       pointer-events: none;
       width: 220px;
       height: 72px;
-      overflow: hidden;
+      overflow: hidden; /* Важно для обрезки увеличенного контента */
     }
 
-    /* Увеличенный контент под навбаром (лупа) */
+    /* Контент под навбаром (увеличенный) */
     .nav-magnifier-content {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(1.4);
+      width: 100vw;
+      height: 100vh;
       pointer-events: none;
       overflow: hidden;
       border-radius: 99em;
-      backdrop-filter: blur(1px);
-      -webkit-backdrop-filter: blur(1px);
-      background: var(--c-bg);
+      backdrop-filter: blur(23px);
+      -webkit-backdrop-filter: blur(23px);
     }
 
     /* Сам навбар поверх лупы */
@@ -337,20 +337,9 @@
 
   <!-- ===== НАВБАР ===== -->
   <div class="nav-wrapper" id="navWrapper">
-    <!-- Увеличенный контент под навбаром (лупа) -->
+    <!-- Увеличенный контент под навбаром -->
     <div class="nav-magnifier-content" id="magnifierContent">
-      <div id="magnifierClone" style="
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: var(--c-bg);
-        color: var(--c-content);
-        overflow: hidden;
-        pointer-events: none;
-        transform-origin: center center;
-      "></div>
+      <!-- Сюда будет скопирован контент -->
     </div>
     
     <nav class="switcher" role="tablist" aria-label="Навигация">
@@ -385,113 +374,53 @@
   </div>
 
   <script>
-    // ===== ПРАВИЛЬНЫЙ ЭФФЕКТ ЛУПЫ =====
+    // ===== ЭФФЕКТ УВЕЛИЧЕНИЯ ПОД НАВБАРОМ =====
     (() => {
       const wrapper = document.getElementById('navWrapper');
-      const magnifierClone = document.getElementById('magnifierClone');
+      const magnifier = document.getElementById('magnifierContent');
       const content = document.getElementById('mainContent');
-      
-      // Создаём канвас для рендеринга увеличенной области
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      magnifierClone.appendChild(canvas);
-      
-      // Настройки увеличения
-      const ZOOM = 1.4; // Увеличение в 1.4 раза
-      let wrapperRect, contentRect;
-      
+
+      // Копируем контент в лупу
       function updateMagnifier() {
-        // Получаем текущие позиции
-        wrapperRect = wrapper.getBoundingClientRect();
-        contentRect = content.getBoundingClientRect();
-        
-        // Вычисляем область, которую нужно увеличить
-        // Находим центр навбара относительно контента
-        const centerX = wrapperRect.left + wrapperRect.width / 2;
-        const centerY = wrapperRect.top + wrapperRect.height / 2;
-        
-        // Вычисляем, какая часть контента находится под навбаром
-        const contentX = centerX - contentRect.left;
-        const contentY = centerY - contentRect.top;
-        
-        // Размер области для увеличения (соответствует размеру навбара)
-        const areaWidth = wrapperRect.width / ZOOM;
-        const areaHeight = wrapperRect.height / ZOOM;
-        
-        // Настройка канваса
-        canvas.width = wrapperRect.width;
-        canvas.height = wrapperRect.height;
-        canvas.style.width = '100%';
-        canvas.style.height = '100%';
-        
-        // Очищаем канвас
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Рисуем увеличенную область
-        ctx.save();
-        ctx.scale(ZOOM, ZOOM);
-        
-        // Вычисляем смещение для центрирования
-        const offsetX = contentX - (wrapperRect.width / 2 / ZOOM);
-        const offsetY = contentY - (wrapperRect.height / 2 / ZOOM);
-        
-        // Отрисовываем контент с нужным смещением
-        ctx.drawImage(
-          content, // Исходный элемент
-          offsetX, offsetY, // Кадрируем область
-          wrapperRect.width / ZOOM, wrapperRect.height / ZOOM, // Размер области
-          0, 0, // Позиция на канвасе
-          canvas.width, canvas.height // Размер на канвасе
-        );
-        
-        ctx.restore();
-        
-        // Добавляем эффект размытия (1px)
-        // Для простоты используем backdrop-filter на контейнере
-      }
-      
-      // Функция для рендеринга контента в канвас
-      function renderContentToCanvas() {
-        // Создаём временный элемент для рендеринга
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = content.innerHTML;
-        tempDiv.style.cssText = `
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: ${content.scrollWidth}px;
-          height: ${content.scrollHeight}px;
+        // Клонируем содержимое, но не саму лупу
+        const clone = content.cloneNode(true);
+        clone.id = 'magnifierClone';
+        clone.style.cssText = `
+          max-width: 700px;
+          margin: 0 auto;
           padding: 2rem 1.5rem;
           font-size: 1.1rem;
           line-height: 1.8;
           background: var(--c-bg);
           color: var(--c-content);
-          font-family: "DM Sans", sans-serif;
-          max-width: 700px;
-          margin: 0 auto;
-          visibility: hidden;
+          width: 100%;
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%) scale(1.4);
+          transform-origin: center center;
           pointer-events: none;
         `;
-        document.body.appendChild(tempDiv);
         
-        // Используем html2canvas для рендеринга
-        // Но проще использовать сам элемент content
-        updateMagnifier();
-        
-        document.body.removeChild(tempDiv);
+        // Очищаем и добавляем новый контент
+        magnifier.innerHTML = '';
+        magnifier.appendChild(clone);
       }
-      
-      // Обновляем при скролле и ресайзе
-      const update = () => {
-        requestAnimationFrame(updateMagnifier);
-      };
-      
-      window.addEventListener('scroll', update);
-      window.addEventListener('resize', update);
-      
-      // Первоначальное обновление
-      setTimeout(update, 100);
-      
+
+      // Обновляем при загрузке и ресайзе
+      updateMagnifier();
+      window.addEventListener('resize', updateMagnifier);
+
+      // Обновляем при скролле (чтобы контент под навбаром менялся)
+      window.addEventListener('scroll', () => {
+        // Просто обновляем позицию скролла в увеличенном контенте
+        const scrollY = window.scrollY;
+        const clone = document.getElementById('magnifierClone');
+        if (clone) {
+          clone.style.transform = `translate(-50%, calc(-50% - ${scrollY * 1.4}px)) scale(1.4)`;
+        }
+      });
+
       // ===== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК =====
       const radios = document.querySelectorAll('.switcher input[type="radio"]');
       radios.forEach(radio => {
@@ -528,8 +457,6 @@
         const offsetX = dx * 0.08;
         const offsetY = dy * 0.08;
         wrapper.style.transform = `translate(calc(-50% + ${offsetX}px), ${offsetY}px)`;
-        // Обновляем лупу при перетаскивании
-        updateMagnifier();
       };
 
       const resetNav = () => {
@@ -571,7 +498,7 @@
       };
 
       nav.addEventListener('mousedown', (e) => { 
-        if (e.target.closest('.switcher__option')) return;
+        if (e.target.closest('.switcher__option')) return; // Не мешаем кликам по вкладкам
         onStart(e.clientX, e.clientY); 
         e.preventDefault(); 
       });
@@ -598,7 +525,6 @@
         startWidth = wrapper.offsetWidth;
         startHeight = wrapper.offsetHeight;
         startRadius = parseFloat(getComputedStyle(wrapper).borderRadius) || 99;
-        updateMagnifier();
       });
     })();
   </script>
