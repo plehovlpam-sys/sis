@@ -68,7 +68,7 @@
       color: color-mix(in srgb, var(--c-content) 70%, var(--c-action));
     }
 
-    /* ===== НАВБАР С ЭФФЕКТОМ ЛУПЫ ===== */
+    /* ===== НАВБАР ===== */
     .nav-wrapper {
       position: fixed;
       bottom: 30px;
@@ -76,24 +76,43 @@
       transform: translateX(-50%);
       z-index: 100;
       border-radius: 99em;
-      pointer-events: none; /* Чтобы клики проходили сквозь wrapper */
+      pointer-events: none;
+      width: 220px;
+      height: 72px;
+      overflow: hidden; /* Важно для обрезки увеличенного контента */
     }
 
+    /* Контент под навбаром (увеличенный) */
+    .nav-magnifier-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(1.4);
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      overflow: hidden;
+      border-radius: 99em;
+      backdrop-filter: blur(1px);
+      -webkit-backdrop-filter: blur(1px);
+    }
+
+    /* Сам навбар поверх лупы */
     .switcher {
       position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 12px;
-      width: 220px;
-      height: 72px;
+      width: 100%;
+      height: 100%;
       box-sizing: border-box;
       padding: 8px 16px;
       border: none;
       border-radius: 99em;
       background-color: color-mix(in srgb, var(--c-glass) 12%, transparent);
-      backdrop-filter: blur(1px) saturate(var(--saturation));
-      -webkit-backdrop-filter: blur(1px) saturate(var(--saturation));
+      backdrop-filter: blur(1px);
+      -webkit-backdrop-filter: blur(1px);
       box-shadow:
         inset 0 0 0 1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 10%), transparent),
         inset 1.8px 3px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 90%), transparent),
@@ -108,10 +127,11 @@
       transition:
         background-color 400ms cubic-bezier(1, 0, 0.4, 1),
         box-shadow 400ms cubic-bezier(1, 0, 0.4, 1);
-      pointer-events: auto; /* А сам навбар кликабельный */
+      pointer-events: auto;
       touch-action: none;
       user-select: none;
       cursor: grab;
+      z-index: 2;
     }
 
     .switcher:active {
@@ -185,14 +205,14 @@
       transition: stroke 200ms;
     }
 
-    /* БЕГУНОК (таблетка) - теперь шире! */
+    /* БЕГУНОК (таблетка) */
     .switcher::after {
       content: '';
       position: absolute;
       left: 6px;
       top: 6px;
       display: block;
-      width: 68px; /* УВЕЛИЧИЛ ШИРИНУ */
+      width: 68px;
       height: calc(100% - 12px);
       border-radius: 99em;
       background-color: color-mix(in srgb, var(--c-glass) 36%, transparent);
@@ -212,7 +232,7 @@
         box-shadow 400ms cubic-bezier(1, 0, 0.4, 1);
     }
 
-    /* Позиции бегунка - пересчитаны под ширину 68px */
+    /* Позиции бегунка */
     .switcher:has(input[c-option="1"]:checked)::after {
       translate: 0 0;
       width: 68px;
@@ -240,9 +260,11 @@
 
     /* ===== Адаптив ===== */
     @media (max-width: 480px) {
-      .switcher {
+      .nav-wrapper {
         width: 190px;
         height: 64px;
+      }
+      .switcher {
         gap: 8px;
         padding: 6px 12px;
       }
@@ -288,7 +310,7 @@
 <body>
 
   <!-- ===== МНОГО ТЕКСТА ===== -->
-  <div class="content">
+  <div class="content" id="mainContent">
     <h1>Навбар с лупой</h1>
     <p>Прокручивай страницу и смотри, как контент под навбаром увеличивается. Эффект работает как увеличительное стекло — всё, что попадает под навбар, становится крупнее.</p>
 
@@ -315,6 +337,11 @@
 
   <!-- ===== НАВБАР ===== -->
   <div class="nav-wrapper" id="navWrapper">
+    <!-- Увеличенный контент под навбаром -->
+    <div class="nav-magnifier-content" id="magnifierContent">
+      <!-- Сюда будет скопирован контент -->
+    </div>
+    
     <nav class="switcher" role="tablist" aria-label="Навигация">
       <span class="switcher__legend">Переключение вкладок</span>
 
@@ -347,78 +374,59 @@
   </div>
 
   <script>
-    // ===== ЭФФЕКТ УВЕЛИЧИТЕЛЬНОГО СТЕКЛА ПОД НАВБАРОМ =====
+    // ===== ЭФФЕКТ УВЕЛИЧЕНИЯ ПОД НАВБАРОМ =====
     (() => {
       const wrapper = document.getElementById('navWrapper');
-      const nav = wrapper.querySelector('.switcher');
-      
-      // Создаём элемент-лупу
-      const glass = document.createElement('div');
-      glass.style.cssText = `
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        border-radius: 99em;
-        pointer-events: none;
-        background-repeat: no-repeat;
-        z-index: 0;
-        background-size: ${window.innerWidth * 1.4}px auto;
-        backdrop-filter: blur(1px);
-        -webkit-backdrop-filter: blur(1px);
-        transition: none;
-      `;
-      
-      // Вставляем лупу в wrapper (под навбар)
-      wrapper.style.position = 'fixed';
-      wrapper.style.overflow = 'hidden';
-      wrapper.style.pointerEvents = 'none';
-      wrapper.insertBefore(glass, nav);
+      const magnifier = document.getElementById('magnifierContent');
+      const content = document.getElementById('mainContent');
 
-      // Функция обновления позиции фона лупы
+      // Копируем контент в лупу
       function updateMagnifier() {
-        const rect = wrapper.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
+        // Клонируем содержимое, но не саму лупу
+        const clone = content.cloneNode(true);
+        clone.id = 'magnifierClone';
+        clone.style.cssText = `
+          max-width: 700px;
+          margin: 0 auto;
+          padding: 2rem 1.5rem;
+          font-size: 1.1rem;
+          line-height: 1.8;
+          background: var(--c-bg);
+          color: var(--c-content);
+          width: 100%;
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%) scale(1.4);
+          transform-origin: center center;
+          pointer-events: none;
+        `;
         
-        // Масштаб увеличения 1.4x (40% увеличение)
-        const scale = 1.4;
-        const offsetX = centerX * (scale - 1);
-        const offsetY = centerY * (scale - 1);
-        
-        glass.style.backgroundImage = `url('data:image/svg+xml,${encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="${window.innerWidth}" height="${window.innerHeight}">
-            <foreignObject width="100%" height="100%">
-              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;font-size:20px;font-family:'DM Sans',sans-serif;background:var(--c-bg);color:var(--c-content);padding:2rem 1.5rem;line-height:1.8;">
-                ${document.querySelector('.content').innerHTML}
-              </div>
-            </foreignObject>
-          </svg>
-        `)}')`;
-        
-        glass.style.backgroundPosition = `-${offsetX}px -${offsetY}px`;
-        glass.style.backgroundSize = `${window.innerWidth * scale}px ${window.innerHeight * scale}px`;
+        // Очищаем и добавляем новый контент
+        magnifier.innerHTML = '';
+        magnifier.appendChild(clone);
       }
 
-      // Обновляем при скролле и ресайзе
-      window.addEventListener('scroll', updateMagnifier);
+      // Обновляем при загрузке и ресайзе
+      updateMagnifier();
       window.addEventListener('resize', updateMagnifier);
-      
-      // Первоначальное обновление
-      setTimeout(updateMagnifier, 100);
 
-      // ===== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК (теперь работает!) =====
-      const radios = nav.querySelectorAll('input[type="radio"]');
+      // Обновляем при скролле (чтобы контент под навбаром менялся)
+      window.addEventListener('scroll', () => {
+        // Просто обновляем позицию скролла в увеличенном контенте
+        const scrollY = window.scrollY;
+        const clone = document.getElementById('magnifierClone');
+        if (clone) {
+          clone.style.transform = `translate(-50%, calc(-50% - ${scrollY * 1.4}px)) scale(1.4)`;
+        }
+      });
+
+      // ===== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК =====
+      const radios = document.querySelectorAll('.switcher input[type="radio"]');
       radios.forEach(radio => {
         radio.addEventListener('change', function() {
           if (this.checked) {
-            // Снимаем выделение со всех
-            radios.forEach(r => r.checked = false);
-            this.checked = true;
-            
-            // Обновляем aria-selected
-            const labels = nav.querySelectorAll('.switcher__option');
+            const labels = document.querySelectorAll('.switcher__option');
             labels.forEach((label, index) => {
               const input = label.querySelector('input');
               label.setAttribute('aria-selected', input === this ? 'true' : 'false');
@@ -428,6 +436,7 @@
       });
 
       // ===== ЖЕЛЕЙНОЕ ПЕРЕТАСКИВАНИЕ =====
+      const nav = document.querySelector('.switcher');
       let startX = 0, startY = 0;
       let isDragging = false;
       let startWidth = 0, startHeight = 0, startRadius = 0;
@@ -435,29 +444,29 @@
 
       const applyTransform = (dx, dy) => {
         const distance = Math.sqrt(dx * dx + dy * dy);
-        const maxDistance = 150;
+        const maxDistance = 50;
         const normalized = Math.min(distance / maxDistance, 1);
         const scaleX = 1 + normalized * 0.25;
         const scaleY = 1 + normalized * 0.2;
         const newWidth = startWidth * scaleX;
         const newHeight = startHeight * scaleY;
         const newRadius = startRadius + normalized * 20;
-        nav.style.width = newWidth + 'px';
-        nav.style.height = newHeight + 'px';
-        nav.style.borderRadius = newRadius + 'px';
+        wrapper.style.width = newWidth + 'px';
+        wrapper.style.height = newHeight + 'px';
+        wrapper.style.borderRadius = newRadius + 'px';
         const offsetX = dx * 0.08;
         const offsetY = dy * 0.08;
-        nav.style.transform = `translate(calc(-50% + ${offsetX}px), ${offsetY}px)`;
+        wrapper.style.transform = `translate(calc(-50% + ${offsetX}px), ${offsetY}px)`;
       };
 
       const resetNav = () => {
-        nav.style.width = startWidth + 'px';
-        nav.style.height = startHeight + 'px';
-        nav.style.borderRadius = startRadius + 'px';
-        nav.style.transform = 'translateX(-50%)';
-        nav.style.transition = 'width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), border-radius 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        wrapper.style.width = startWidth + 'px';
+        wrapper.style.height = startHeight + 'px';
+        wrapper.style.borderRadius = startRadius + 'px';
+        wrapper.style.transform = 'translateX(-50%)';
+        wrapper.style.transition = 'width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), border-radius 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
         setTimeout(() => {
-          nav.style.transition = 'background-color 400ms cubic-bezier(1, 0, 0.4, 1), box-shadow 400ms cubic-bezier(1, 0, 0.4, 1)';
+          wrapper.style.transition = '';
         }, 500);
       };
 
@@ -465,10 +474,10 @@
         isDragging = true;
         startX = clientX;
         startY = clientY;
-        startWidth = nav.offsetWidth;
-        startHeight = nav.offsetHeight;
-        startRadius = parseFloat(getComputedStyle(nav).borderRadius) || 99;
-        nav.style.transition = 'background-color 400ms cubic-bezier(1, 0, 0.4, 1), box-shadow 400ms cubic-bezier(1, 0, 0.4, 1)';
+        startWidth = wrapper.offsetWidth;
+        startHeight = wrapper.offsetHeight;
+        startRadius = parseFloat(getComputedStyle(wrapper).borderRadius) || 99;
+        wrapper.style.transition = 'none';
         nav.style.cursor = 'grabbing';
       };
 
@@ -488,18 +497,34 @@
         nav.style.cursor = 'grab';
       };
 
-      nav.addEventListener('mousedown', (e) => { onStart(e.clientX, e.clientY); e.preventDefault(); });
+      nav.addEventListener('mousedown', (e) => { 
+        if (e.target.closest('.switcher__option')) return; // Не мешаем кликам по вкладкам
+        onStart(e.clientX, e.clientY); 
+        e.preventDefault(); 
+      });
+      
       window.addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY));
       window.addEventListener('mouseup', onEnd);
-      nav.addEventListener('touchstart', (e) => { const t = e.touches[0]; onStart(t.clientX, t.clientY); e.preventDefault(); }, { passive: false });
-      window.addEventListener('touchmove', (e) => { const t = e.touches[0]; onMove(t.clientX, t.clientY); }, { passive: true });
+      
+      nav.addEventListener('touchstart', (e) => { 
+        if (e.target.closest('.switcher__option')) return;
+        const t = e.touches[0]; 
+        onStart(t.clientX, t.clientY); 
+        e.preventDefault(); 
+      }, { passive: false });
+      
+      window.addEventListener('touchmove', (e) => { 
+        const t = e.touches[0]; 
+        onMove(t.clientX, t.clientY); 
+      }, { passive: true });
+      
       window.addEventListener('touchend', onEnd, { passive: true });
       window.addEventListener('touchcancel', onEnd, { passive: true });
 
       window.addEventListener('load', () => {
-        startWidth = nav.offsetWidth;
-        startHeight = nav.offsetHeight;
-        startRadius = parseFloat(getComputedStyle(nav).borderRadius) || 99;
+        startWidth = wrapper.offsetWidth;
+        startHeight = wrapper.offsetHeight;
+        startRadius = parseFloat(getComputedStyle(wrapper).borderRadius) || 99;
       });
     })();
   </script>
