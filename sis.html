@@ -6,7 +6,7 @@
   <title>Навбар с желе</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,100..1000&display=swap" rel="stylesheet" />
   <style>
-    /* ===== Глобальные переменные (светлая тема) ===== */
+    /* ===== Глобальные переменные ===== */
     :root {
       --c-glass: #bbbbbc;
       --c-light: #fff;
@@ -33,10 +33,18 @@
       font-optical-sizing: auto;
       background: var(--c-bg);
       color: var(--c-content);
-      padding: 0 0 160px;
+      padding: 0;
       min-height: 100vh;
       transition: background 400ms cubic-bezier(1, 0, 0.4, 1), color 400ms cubic-bezier(1, 0, 0.4, 1);
       overflow-x: hidden;
+    }
+
+    /* ===== КОНТЕЙНЕР ДЛЯ РАСТЯГИВАНИЯ ===== */
+    .content-wrapper {
+      transition: transform 0.1s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transform-origin: bottom center;
+      padding-bottom: 120px;
+      will-change: transform;
     }
 
     /* ===== Много текста ===== */
@@ -86,8 +94,8 @@
       border: none;
       border-radius: 99em;
       background-color: color-mix(in srgb, var(--c-glass) 12%, transparent);
-      backdrop-filter: blur(10px) saturate(var(--saturation));
-      -webkit-backdrop-filter: blur(10px) saturate(var(--saturation));
+      backdrop-filter: blur(8px) saturate(var(--saturation));
+      -webkit-backdrop-filter: blur(8px) saturate(var(--saturation));
       box-shadow:
         inset 0 0 0 1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 10%), transparent),
         inset 1.8px 3px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 90%), transparent),
@@ -180,14 +188,14 @@
       transition: stroke 200ms;
     }
 
-    /* Бегунок */
+    /* Бегунок (ТАБЛЕТКА) - ширина увеличена до 72px */
     .switcher::after {
       content: '';
       position: absolute;
       left: 6px;
       top: 6px;
       display: block;
-      width: 100px;
+      width: 72px;
       height: calc(100% - 12px);
       border-radius: 99em;
       background-color: color-mix(in srgb, var(--c-glass) 36%, transparent);
@@ -210,18 +218,18 @@
     /* Позиции бегунка */
     .switcher:has(input[c-option="1"]:checked)::after {
       translate: 0 0;
-      width: 56px;
+      width: 72px;
     }
     .switcher:has(input[c-option="2"]:checked)::after {
       translate: 62px 0;
-      width: 56px;
+      width: 72px;
     }
     .switcher:has(input[c-option="3"]:checked)::after {
       translate: 124px 0;
-      width: 56px;
+      width: 72px;
     }
 
-    /* Анимация при клике (желейный пинг) */
+    /* Анимация при клике */
     .switcher__option:has(input:checked) .switcher__icon {
       animation: iconPop 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
     }
@@ -233,7 +241,7 @@
       100% { transform: scale(1); }
     }
 
-    /* Адаптив для маленьких экранов */
+    /* Адаптив */
     @media (max-width: 480px) {
       .switcher {
         width: 190px;
@@ -250,25 +258,25 @@
         height: 22px;
       }
       .switcher::after {
-        width: 48px;
+        width: 60px;
         height: calc(100% - 10px);
         left: 5px;
         top: 5px;
       }
       .switcher:has(input[c-option="1"]:checked)::after {
-        width: 48px;
+        width: 60px;
       }
       .switcher:has(input[c-option="2"]:checked)::after {
         translate: 53px 0;
-        width: 48px;
+        width: 60px;
       }
       .switcher:has(input[c-option="3"]:checked)::after {
         translate: 106px 0;
-        width: 48px;
+        width: 60px;
       }
     }
 
-    /* ===== Дополнительные стили для красоты ===== */
+    /* ===== Дополнительные стили ===== */
     a {
       color: var(--c-action);
       text-decoration: none;
@@ -282,55 +290,51 @@
 </head>
 <body>
 
-  <!-- ===== МНОГО ТЕКСТА ===== -->
-  <div class="content">
-    <h1>Живой навбар</h1>
-    <p>Потяните его пальцем в любую сторону — он будет слегка растягиваться, а затем упруго возвращаться в исходную форму. Это эффект «желе» на основе CSS-трансформаций и физики касаний.</p>
+  <!-- ===== ОБЁРТКА ДЛЯ РАСТЯГИВАНИЯ ===== -->
+  <div class="content-wrapper" id="contentWrapper">
+    <div class="content">
+      <h1>Живой навбар</h1>
+      <p>Потяните его пальцем в любую сторону — он будет слегка растягиваться, а затем упруго возвращаться в исходную форму. Это эффект «желе» на основе CSS-трансформаций и физики касаний.</p>
 
-    <h2>Первый абзац</h2>
-    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+      <h2>Первый абзац</h2>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
 
-    <h2>Второй абзац</h2>
-    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+      <h2>Второй абзац</h2>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
 
-    <blockquote>«Желейный эффект делает интерфейс живым и отзывчивым на прикосновения.»</blockquote>
+      <blockquote>«Желейный эффект делает интерфейс живым и отзывчивым на прикосновения.»</blockquote>
 
-    <h2>Третий абзац</h2>
-    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+      <h2>Третий абзац</h2>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
 
-    <h2>Четвёртый абзац</h2>
-    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+      <h2>Четвёртый абзац</h2>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
 
-    <h2>Пятый абзац</h2>
-    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+      <h2>Пятый абзац</h2>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
 
-    <h2>Шестой абзац</h2>
-    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+      <h2>Шестой абзац</h2>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
 
-    <h2>Седьмой абзац</h2>
-    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+      <h2>Седьмой абзац</h2>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
 
-    <h2>Восьмой абзац</h2>
-    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+      <h2>Восьмой абзац</h2>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
 
-    <h2>Девятый абзац</h2>
-    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+      <h2>Девятый абзац</h2>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
 
-    <h2>Десятый абзац</h2>
-    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-
-    <h2>Одиннадцатый абзац</h2>
-    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-
-    <h2>Двенадцатый абзац</h2>
-    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+      <h2>Десятый абзац</h2>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+    </div>
   </div>
 
   <!-- ===== НАВБАР ===== -->
   <nav class="switcher" role="tablist" aria-label="Навигация">
     <span class="switcher__legend">Переключение вкладок</span>
 
-    <!-- Вкладка 1: Сегодня (дом) -->
+    <!-- Вкладка 1: Сегодня -->
     <label class="switcher__option" role="tab" aria-selected="true">
       <input class="switcher__input" type="radio" name="tab" value="today" c-option="1" checked />
       <svg class="switcher__icon" viewBox="0 0 24 24">
@@ -338,7 +342,7 @@
       </svg>
     </label>
 
-    <!-- Вкладка 2: Успеваемость (график) -->
+    <!-- Вкладка 2: Успеваемость -->
     <label class="switcher__option" role="tab" aria-selected="false">
       <input class="switcher__input" type="radio" name="tab" value="progress" c-option="2" />
       <svg class="switcher__icon" viewBox="0 0 24 24">
@@ -346,7 +350,7 @@
       </svg>
     </label>
 
-    <!-- Вкладка 3: Ещё (меню) -->
+    <!-- Вкладка 3: Ещё -->
     <label class="switcher__option" role="tab" aria-selected="false">
       <input class="switcher__input" type="radio" name="tab" value="more" c-option="3" />
       <svg class="switcher__icon" viewBox="0 0 24 24">
@@ -358,10 +362,37 @@
   </nav>
 
   <script>
-    // ===== ЖЕЛЕЙНОЕ ПЕРЕТАСКИВАНИЕ =====
+    // ===== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК =====
+    (() => {
+      const radios = document.querySelectorAll('.switcher__input');
+      const labels = document.querySelectorAll('.switcher__option');
+
+      radios.forEach((radio, index) => {
+        radio.addEventListener('change', () => {
+          if (radio.checked) {
+            // Обновляем aria-selected
+            labels.forEach((label, i) => {
+              label.setAttribute('aria-selected', i === index ? 'true' : 'false');
+            });
+          }
+        });
+      });
+
+      // Инициализация
+      const checkedRadio = document.querySelector('.switcher__input:checked');
+      if (checkedRadio) {
+        const index = Array.from(radios).indexOf(checkedRadio);
+        labels.forEach((label, i) => {
+          label.setAttribute('aria-selected', i === index ? 'true' : 'false');
+        });
+      }
+    })();
+
+    // ===== ЖЕЛЕЙНОЕ ПЕРЕТАСКИВАНИЕ С РАСТЯГИВАНИЕМ КОНТЕНТА =====
     (() => {
       const nav = document.querySelector('.switcher');
-      if (!nav) return;
+      const wrapper = document.getElementById('contentWrapper');
+      if (!nav || !wrapper) return;
 
       let startX = 0,
         startY = 0;
@@ -371,29 +402,35 @@
         startRadius = 0;
       let rafId = null;
 
-      // Балансируем анимацию через requestAnimationFrame
       const applyTransform = (dx, dy) => {
-        // Растяжение пропорционально силе перетаскивания
+        // Максимальное смещение 30px
+        const maxDistance = 30;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        const maxDistance = 150;
         const normalized = Math.min(distance / maxDistance, 1);
 
-        // Плавное увеличение размеров
-        const scaleX = 1 + normalized * 0.25;
-        const scaleY = 1 + normalized * 0.2;
+        // Растяжение навбара
+        const scaleX = 1 + normalized * 0.08;
+        const scaleY = 1 + normalized * 0.06;
 
         const newWidth = startWidth * scaleX;
         const newHeight = startHeight * scaleY;
-        const newRadius = startRadius + normalized * 20;
+        const newRadius = startRadius + normalized * 8;
 
         nav.style.width = newWidth + 'px';
         nav.style.height = newHeight + 'px';
         nav.style.borderRadius = newRadius + 'px';
 
-        // Небольшой сдвиг в сторону перетаскивания (центр остаётся на месте)
-        const offsetX = dx * 0.08;
-        const offsetY = dy * 0.08;
+        // Смещение навбара
+        const offsetX = dx * 0.3;
+        const offsetY = dy * 0.3;
         nav.style.translate = `calc(-50% + ${offsetX}px) calc(${offsetY}px)`;
+
+        // ===== РАСТЯГИВАНИЕ КОНТЕНТА ПО ВЕРТИКАЛИ =====
+        // Чем сильнее тянешь вниз, тем больше растягивается контент
+        const stretchY = 1 + (dy > 0 ? normalized * 0.06 : 0);
+        const stretchX = 1 + normalized * 0.02;
+        wrapper.style.transform = `scale(${stretchX}, ${stretchY})`;
+        wrapper.style.transformOrigin = 'bottom center';
       };
 
       const resetNav = () => {
@@ -401,21 +438,20 @@
         nav.style.height = startHeight + 'px';
         nav.style.borderRadius = startRadius + 'px';
         nav.style.translate = '-50%';
-        // Пружинный эффект через transition
-        nav.style.transition =
-          'width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), border-radius 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), translate 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        wrapper.style.transform = 'scale(1, 1)';
 
-        // Сброс через короткое время
+        nav.style.transition =
+          'width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), border-radius 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), translate 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        wrapper.style.transition = 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+
         setTimeout(() => {
           nav.style.transition =
             'background-color 400ms cubic-bezier(1, 0, 0.4, 1), box-shadow 400ms cubic-bezier(1, 0, 0.4, 1), width 0.1s cubic-bezier(0.34, 1.56, 0.64, 1), height 0.1s cubic-bezier(0.34, 1.56, 0.64, 1), border-radius 0.1s cubic-bezier(0.34, 1.56, 0.64, 1)';
-        }, 500);
+          wrapper.style.transition = 'transform 0.1s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        }, 550);
       };
 
       const onStart = (clientX, clientY) => {
-        if (nav.closest('.switcher__option')?.querySelector('input:checked')) {
-          // Можно перетаскивать даже если вкладка выбрана
-        }
         isDragging = true;
         startX = clientX;
         startY = clientY;
@@ -423,9 +459,9 @@
         startHeight = nav.offsetHeight;
         startRadius = parseFloat(getComputedStyle(nav).borderRadius) || 99;
 
-        // Отключаем переходы для мгновенного отклика
         nav.style.transition =
           'background-color 400ms cubic-bezier(1, 0, 0.4, 1), box-shadow 400ms cubic-bezier(1, 0, 0.4, 1)';
+        wrapper.style.transition = 'transform 0.05s cubic-bezier(0.34, 1.56, 0.64, 1)';
         nav.style.cursor = 'grabbing';
       };
 
