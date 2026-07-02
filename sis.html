@@ -6,362 +6,149 @@
   <title>Навбар-лупа</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,100..1000&display=swap" rel="stylesheet" />
   <style>
-    /* ===== Глобальные переменные ===== */
-    :root {
-      --c-glass: #bbbbbc;
-      --c-light: #fff;
-      --c-dark: #000;
-      --c-content: #224;
-      --c-action: #0052f5;
-      --c-bg: #E8E8E9;
-      --glass-reflex-dark: 1;
-      --glass-reflex-light: 1;
-      --saturation: 150%;
-    }
-
-    /* ===== Базовые стили ===== */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
     body {
-      font-size: 20px;
-      font-family: "DM Sans", sans-serif;
-      font-optical-sizing: auto;
-      background: var(--c-bg);
-      color: var(--c-content);
-      padding: 0 0 160px;
-      min-height: 100vh;
-      transition: background 400ms cubic-bezier(1, 0, 0.4, 1), color 400ms cubic-bezier(1, 0, 0.4, 1);
-      overflow-x: hidden;
+      font-size:20px; font-family:"DM Sans",sans-serif; font-optical-sizing:auto;
+      background:#E8E8E9; color:#224; padding:0 0 160px; min-height:100vh;
+      transition:background 400ms cubic-bezier(1,0,0.4,1), color 400ms cubic-bezier(1,0,0.4,1); overflow-x:hidden;
     }
-
-    /* ===== Много текста ===== */
     .content {
-      max-width: 700px;
-      margin: 0 auto;
-      padding: 2rem 1.5rem;
-      font-size: 1.1rem;
-      line-height: 1.8;
+      max-width:700px; margin:0 auto; padding:2rem 1.5rem; font-size:1.1rem; line-height:1.8;
     }
-    .content p {
-      margin-bottom: 1.8rem;
-    }
-    .content h1 {
-      font-size: 2.8rem;
-      margin: 1.5rem 0 0.8rem;
-      font-weight: 700;
-    }
-    .content h2 {
-      font-size: 2rem;
-      margin: 2rem 0 0.8rem;
-      font-weight: 600;
-    }
+    .content p { margin-bottom:1.8rem; }
+    .content h1 { font-size:2.8rem; margin:1.5rem 0 0.8rem; font-weight:700; }
+    .content h2 { font-size:2rem; margin:2rem 0 0.8rem; font-weight:600; }
     .content blockquote {
-      font-size: 1.6rem;
-      padding-left: 1.2rem;
-      border-left: 0.2rem solid var(--c-action);
-      margin: 1.5rem 0;
-      color: color-mix(in srgb, var(--c-content) 70%, var(--c-action));
+      font-size:1.6rem; padding-left:1.2rem; border-left:0.2rem solid #0052f5;
+      margin:1.5rem 0; color:color-mix(in srgb, #224 70%, #0052f5);
     }
+    a { color:#0052f5; text-decoration:none; }
+    .content img { max-width:100%; border-radius:12px; margin:1rem 0; }
 
-    /* ===== НАВБАР ===== */
     .nav-wrapper {
-      position: fixed;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 100;
-      border-radius: 99em;
-      pointer-events: none;
-      width: 220px;
-      height: 72px;
-      overflow: hidden; /* Важно для обрезки увеличенного контента */
+      position:fixed; bottom:30px; left:50%; transform:translateX(-50%); z-index:100;
+      border-radius:99em; pointer-events:none; width:220px; height:72px; overflow:hidden;
     }
-
-    /* Контент под навбаром (увеличенный) */
     .nav-magnifier-content {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) scale(1.4);
-      width: 100vw;
-      height: 100vh;
-      pointer-events: none;
-      overflow: hidden;
-      border-radius: 99em;
-      backdrop-filter: blur(11px);
-      -webkit-backdrop-filter: blur(11px);
+      position:absolute; top:50%; left:50%; transform:translate(-50%, -50%) scale(1.4);
+      width:100vw; height:100vh; pointer-events:none; overflow:hidden; border-radius:99em;
+      backdrop-filter:blur(11px); -webkit-backdrop-filter:blur(11px);
     }
-
-    /* Сам навбар поверх лупы */
     .switcher {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      width: 100%;
-      height: 100%;
-      box-sizing: border-box;
-      padding: 8px 16px;
-      border: none;
-      border-radius: 99em;
-      background-color: color-mix(in srgb, var(--c-glass) 12%, transparent);
-      backdrop-filter: blur(1px);
-      -webkit-backdrop-filter: blur(1px);
-      box-shadow:
-        inset 0 0 0 1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 10%), transparent),
-        inset 1.8px 3px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 90%), transparent),
-        inset -2px -2px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 80%), transparent),
-        inset -3px -8px 1px -6px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 60%), transparent),
-        inset -0.3px -1px 4px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 12%), transparent),
-        inset -1.5px 2.5px 0px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent),
-        inset 0px 3px 4px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent),
-        inset 2px -6.5px 1px -4px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent),
-        0px 1px 5px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent),
-        0px 6px 16px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 8%), transparent);
-      transition:
-        background-color 400ms cubic-bezier(1, 0, 0.4, 1),
-        box-shadow 400ms cubic-bezier(1, 0, 0.4, 1);
-      pointer-events: auto;
-      touch-action: none;
-      user-select: none;
-      cursor: grab;
-      z-index: 2;
+      position:relative; display:flex; align-items:center; justify-content:center; gap:12px;
+      width:100%; height:100%; box-sizing:border-box; padding:8px 16px; border:none;
+      border-radius:99em; background-color:color-mix(in srgb, #bbbbbc 12%, transparent);
+      backdrop-filter:blur(1px); -webkit-backdrop-filter:blur(1px);
+      box-shadow:inset 0 0 0 1px color-mix(in srgb, #fff 10%, transparent),
+        inset 1.8px 3px 0px -2px color-mix(in srgb, #fff 90%, transparent),
+        inset -2px -2px 0px -2px color-mix(in srgb, #fff 80%, transparent),
+        inset -3px -8px 1px -6px color-mix(in srgb, #fff 60%, transparent),
+        inset -0.3px -1px 4px 0px color-mix(in srgb, #000 12%, transparent),
+        inset -1.5px 2.5px 0px -2px color-mix(in srgb, #000 20%, transparent),
+        inset 0px 3px 4px -2px color-mix(in srgb, #000 20%, transparent),
+        inset 2px -6.5px 1px -4px color-mix(in srgb, #000 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, #000 10%, transparent),
+        0px 6px 16px 0px color-mix(in srgb, #000 8%, transparent);
+      transition:background-color 400ms cubic-bezier(1,0,0.4,1),
+        box-shadow 400ms cubic-bezier(1,0,0.4,1);
+      pointer-events:auto; touch-action:none; user-select:none; cursor:grab; z-index:2;
     }
-
-    .switcher:active {
-      cursor: grabbing;
-    }
-
-    /* Скрываем легенду */
+    .switcher:active { cursor:grabbing; }
     .switcher__legend {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      margin: -1px;
-      border: 0;
-      padding: 0;
-      white-space: nowrap;
-      clip-path: inset(100%);
-      clip: rect(0 0 0 0);
-      overflow: hidden;
+      position:absolute; width:1px; height:1px; margin:-1px; border:0; padding:0;
+      white-space:nowrap; clip-path:inset(100%); clip:rect(0 0 0 0); overflow:hidden;
     }
-
-    /* Скрываем радио-кнопки */
     .switcher__input {
-      clip: rect(0 0 0 0);
-      clip-path: inset(100%);
-      height: 1px;
-      width: 1px;
-      overflow: hidden;
-      position: absolute;
-      white-space: nowrap;
+      clip:rect(0 0 0 0); clip-path:inset(100%); height:1px; width:1px;
+      overflow:hidden; position:absolute; white-space:nowrap;
     }
-
-    /* Каждая вкладка – label с иконкой */
     .switcher__option {
-      --c: var(--c-content);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 48px;
-      height: 48px;
-      border-radius: 99em;
-      color: var(--c);
-      transition: color 200ms, transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
-      cursor: pointer;
-      user-select: none;
-      flex-shrink: 0;
-      position: relative;
-      z-index: 2;
+      --c:#224;
+      display:flex; justify-content:center; align-items:center; width:48px; height:48px;
+      border-radius:99em; color:var(--c); transition:color 200ms, transform 200ms cubic-bezier(0.34,1.56,0.64,1);
+      cursor:pointer; user-select:none; flex-shrink:0; position:relative; z-index:2;
     }
-
-    .switcher__option:hover {
-      --c: var(--c-action);
-      transform: scale(1.15);
-    }
-
-    .switcher__option:has(input:checked) {
-      --c: var(--c-action);
-      cursor: auto;
-      transform: scale(1);
-    }
-
-    /* Иконки (SVG) */
+    .switcher__option:hover { --c:#0052f5; transform:scale(1.15); }
+    .switcher__option:has(input:checked) { --c:#0052f5; cursor:auto; transform:scale(1); }
     .switcher__icon {
-      display: block;
-      width: 26px;
-      height: 26px;
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      transition: stroke 200ms;
+      display:block; width:26px; height:26px; fill:none; stroke:currentColor;
+      stroke-width:2; stroke-linecap:round; stroke-linejoin:round; transition:stroke 200ms;
     }
-
-    /* БЕГУНОК (таблетка) */
     .switcher::after {
-      content: '';
-      position: absolute;
-      left: 6px;
-      top: 6px;
-      display: block;
-      width: 68px;
-      height: calc(100% - 12px);
-      border-radius: 99em;
-      background-color: color-mix(in srgb, var(--c-glass) 36%, transparent);
-      z-index: 1;
-      box-shadow:
-        inset 0 0 0 1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 10%), transparent),
-        inset 2px 1px 0px -1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 90%), transparent),
-        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 80%), transparent),
-        inset -2px -6px 1px -5px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 60%), transparent),
-        inset -1px 2px 3px -1px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent),
-        inset 0px -4px 1px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent),
-        0px 3px 6px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 8%), transparent);
-      transition:
-        translate 400ms cubic-bezier(0.34, 1.56, 0.64, 1),
-        width 400ms cubic-bezier(0.34, 1.56, 0.64, 1),
-        background-color 400ms cubic-bezier(1, 0, 0.4, 1),
-        box-shadow 400ms cubic-bezier(1, 0, 0.4, 1);
+      content:''; position:absolute; left:6px; top:6px; display:block; width:68px;
+      height:calc(100% - 12px); border-radius:99em;
+      background-color:color-mix(in srgb, #bbbbbc 36%, transparent); z-index:1;
+      box-shadow:inset 0 0 0 1px color-mix(in srgb, #fff 10%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, #fff 90%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, #fff 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, #fff 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, #000 20%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, #000 10%, transparent),
+        0px 3px 6px 0px color-mix(in srgb, #000 8%, transparent);
+      transition:translate 400ms cubic-bezier(0.34,1.56,0.64,1),
+        width 400ms cubic-bezier(0.34,1.56,0.64,1),
+        background-color 400ms cubic-bezier(1,0,0.4,1),
+        box-shadow 400ms cubic-bezier(1,0,0.4,1);
     }
-
-    /* Позиции бегунка */
-    .switcher:has(input[c-option="1"]:checked)::after {
-      translate: 0 0;
-      width: 68px;
-    }
-    .switcher:has(input[c-option="2"]:checked)::after {
-      translate: 62px 0;
-      width: 68px;
-    }
-    .switcher:has(input[c-option="3"]:checked)::after {
-      translate: 124px 0;
-      width: 68px;
-    }
-
-    /* Анимация при клике */
+    .switcher:has(input[c-option="1"]:checked)::after { translate:0 0; width:68px; }
+    .switcher:has(input[c-option="2"]:checked)::after { translate:62px 0; width:68px; }
+    .switcher:has(input[c-option="3"]:checked)::after { translate:124px 0; width:68px; }
     .switcher__option:has(input:checked) .switcher__icon {
-      animation: iconPop 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+      animation:iconPop 400ms cubic-bezier(0.34,1.56,0.64,1);
     }
-
     @keyframes iconPop {
-      0% { transform: scale(1); }
-      30% { transform: scale(1.4); }
-      70% { transform: scale(0.9); }
-      100% { transform: scale(1); }
+      0% { transform:scale(1); }
+      30% { transform:scale(1.4); }
+      70% { transform:scale(0.9); }
+      100% { transform:scale(1); }
     }
-
-    /* ===== Адаптив ===== */
-    @media (max-width: 480px) {
-      .nav-wrapper {
-        width: 190px;
-        height: 64px;
-      }
-      .switcher {
-        gap: 8px;
-        padding: 6px 12px;
-      }
-      .switcher__option {
-        width: 42px;
-        height: 42px;
-      }
-      .switcher__icon {
-        width: 22px;
-        height: 22px;
-      }
-      .switcher::after {
-        width: 56px;
-        height: calc(100% - 10px);
-        left: 5px;
-        top: 5px;
-      }
-      .switcher:has(input[c-option="1"]:checked)::after {
-        width: 56px;
-      }
-      .switcher:has(input[c-option="2"]:checked)::after {
-        translate: 53px 0;
-        width: 56px;
-      }
-      .switcher:has(input[c-option="3"]:checked)::after {
-        translate: 106px 0;
-        width: 56px;
-      }
-    }
-
-    /* ===== Дополнительные стили ===== */
-    a {
-      color: var(--c-action);
-      text-decoration: none;
-    }
-    .content img {
-      max-width: 100%;
-      border-radius: 12px;
-      margin: 1rem 0;
+    @media (max-width:480px) {
+      .nav-wrapper { width:190px; height:64px; }
+      .switcher { gap:8px; padding:6px 12px; }
+      .switcher__option { width:42px; height:42px; }
+      .switcher__icon { width:22px; height:22px; }
+      .switcher::after { width:56px; height:calc(100% - 10px); left:5px; top:5px; }
+      .switcher:has(input[c-option="1"]:checked)::after { width:56px; }
+      .switcher:has(input[c-option="2"]:checked)::after { translate:53px 0; width:56px; }
+      .switcher:has(input[c-option="3"]:checked)::after { translate:106px 0; width:56px; }
     }
   </style>
 </head>
 <body>
-
-  <!-- ===== МНОГО ТЕКСТА ===== -->
   <div class="content" id="mainContent">
     <h1>Навбар с лупой</h1>
     <p>Прокручивай страницу и смотри, как контент под навбаром увеличивается. Эффект работает как увеличительное стекло — всё, что попадает под навбар, становится крупнее.</p>
-
     <h2>Первый абзац</h2>
     <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-
     <h2>Второй абзац</h2>
     <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-
     <blockquote>«Эффект лупы под навбаром делает интерфейс более интерактивным и визуально интересным.»</blockquote>
-
     <h2>Третий абзац</h2>
     <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-
     <h2>Четвёртый абзац</h2>
     <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-
     <h2>Пятый абзац</h2>
     <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-
     <h2>Шестой абзац</h2>
     <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
   </div>
 
-  <!-- ===== НАВБАР ===== -->
   <div class="nav-wrapper" id="navWrapper">
-    <!-- Увеличенный контент под навбаром -->
-    <div class="nav-magnifier-content" id="magnifierContent">
-      <!-- Сюда будет скопирован контент -->
-    </div>
-    
+    <div class="nav-magnifier-content" id="magnifierContent"></div>
     <nav class="switcher" role="tablist" aria-label="Навигация">
       <span class="switcher__legend">Переключение вкладок</span>
-
-      <!-- Вкладка 1: Сегодня -->
       <label class="switcher__option" role="tab" aria-selected="true">
         <input class="switcher__input" type="radio" name="tab" value="today" c-option="1" checked />
         <svg class="switcher__icon" viewBox="0 0 24 24">
           <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1" />
         </svg>
       </label>
-
-      <!-- Вкладка 2: Успеваемость -->
       <label class="switcher__option" role="tab" aria-selected="false">
         <input class="switcher__input" type="radio" name="tab" value="progress" c-option="2" />
         <svg class="switcher__icon" viewBox="0 0 24 24">
           <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
       </label>
-
-      <!-- Вкладка 3: Ещё -->
       <label class="switcher__option" role="tab" aria-selected="false">
         <input class="switcher__input" type="radio" name="tab" value="more" c-option="3" />
         <svg class="switcher__icon" viewBox="0 0 24 24">
@@ -374,89 +161,56 @@
   </div>
 
   <script>
-    // ===== ЭФФЕКТ УВЕЛИЧЕНИЯ ПОД НАВБАРОМ =====
     (() => {
       const wrapper = document.getElementById('navWrapper');
       const magnifier = document.getElementById('magnifierContent');
       const content = document.getElementById('mainContent');
 
-      // Копируем контент в лупу
-      function updateMagnifier() {
-        // Клонируем содержимое, но не саму лупу
+      const updateMagnifier = () => {
         const clone = content.cloneNode(true);
         clone.id = 'magnifierClone';
         clone.style.cssText = `
-          max-width: 700px;
-          margin: 0 auto;
-          padding: 2rem 1.5rem;
-          font-size: 1.1rem;
-          line-height: 1.8;
-          background: var(--c-bg);
-          color: var(--c-content);
-          width: 100%;
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%) scale(1.4);
-          transform-origin: center center;
-          pointer-events: none;
+          max-width:700px; margin:0 auto; padding:2rem 1.5rem; font-size:1.1rem; line-height:1.8;
+          background:#E8E8E9; color:#224; width:100%; position:absolute;
+          top:50%; left:50%; transform:translate(-50%, -50%) scale(1.4);
+          transform-origin:center center; pointer-events:none;
         `;
-        
-        // Очищаем и добавляем новый контент
         magnifier.innerHTML = '';
         magnifier.appendChild(clone);
-      }
+      };
 
-      // Обновляем при загрузке и ресайзе
       updateMagnifier();
       window.addEventListener('resize', updateMagnifier);
 
-      // Обновляем при скролле (чтобы контент под навбаром менялся)
       window.addEventListener('scroll', () => {
-        // Просто обновляем позицию скролла в увеличенном контенте
-        const scrollY = window.scrollY;
         const clone = document.getElementById('magnifierClone');
         if (clone) {
-          clone.style.transform = `translate(-50%, calc(-50% - ${scrollY * 1.4}px)) scale(1.4)`;
+          clone.style.transform = `translate(-50%, calc(-50% - ${window.scrollY * 1.4}px)) scale(1.4)`;
         }
       });
 
-      // ===== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК =====
-      const radios = document.querySelectorAll('.switcher input[type="radio"]');
-      radios.forEach(radio => {
+      document.querySelectorAll('.switcher input[type="radio"]').forEach(radio => {
         radio.addEventListener('change', function() {
           if (this.checked) {
-            const labels = document.querySelectorAll('.switcher__option');
-            labels.forEach((label, index) => {
-              const input = label.querySelector('input');
-              label.setAttribute('aria-selected', input === this ? 'true' : 'false');
+            document.querySelectorAll('.switcher__option').forEach(label => {
+              label.setAttribute('aria-selected', label.querySelector('input') === this ? 'true' : 'false');
             });
           }
         });
       });
 
-      // ===== ЖЕЛЕЙНОЕ ПЕРЕТАСКИВАНИЕ =====
       const nav = document.querySelector('.switcher');
-      let startX = 0, startY = 0;
-      let isDragging = false;
-      let startWidth = 0, startHeight = 0, startRadius = 0;
-      let rafId = null;
+      let startX = 0, startY = 0, isDragging = false;
+      let startWidth = 0, startHeight = 0, startRadius = 0, rafId = null;
 
       const applyTransform = (dx, dy) => {
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        const maxDistance = 150;
-        const normalized = Math.min(distance / maxDistance, 1);
-        const scaleX = 1 + normalized * 0.25;
-        const scaleY = 1 + normalized * 0.2;
-        const newWidth = startWidth * scaleX;
-        const newHeight = startHeight * scaleY;
-        const newRadius = startRadius + normalized * 20;
-        wrapper.style.width = newWidth + 'px';
-        wrapper.style.height = newHeight + 'px';
-        wrapper.style.borderRadius = newRadius + 'px';
-        const offsetX = dx * 0.08;
-        const offsetY = dy * 0.08;
-        wrapper.style.transform = `translate(calc(-50% + ${offsetX}px), ${offsetY}px)`;
+        const dist = Math.min(Math.sqrt(dx*dx + dy*dy) / 150, 1);
+        const w = startWidth * (1 + dist * 0.25);
+        const h = startHeight * (1 + dist * 0.2);
+        wrapper.style.width = w + 'px';
+        wrapper.style.height = h + 'px';
+        wrapper.style.borderRadius = (startRadius + dist * 20) + 'px';
+        wrapper.style.transform = `translate(calc(-50% + ${dx * 0.08}px), ${dy * 0.08}px)`;
       };
 
       const resetNav = () => {
@@ -464,16 +218,13 @@
         wrapper.style.height = startHeight + 'px';
         wrapper.style.borderRadius = startRadius + 'px';
         wrapper.style.transform = 'translateX(-50%)';
-        wrapper.style.transition = 'width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), border-radius 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
-        setTimeout(() => {
-          wrapper.style.transition = '';
-        }, 500);
+        wrapper.style.transition = 'width 0.4s cubic-bezier(0.34,1.56,0.64,1), height 0.4s cubic-bezier(0.34,1.56,0.64,1), border-radius 0.4s cubic-bezier(0.34,1.56,0.64,1), transform 0.4s cubic-bezier(0.34,1.56,0.64,1)';
+        setTimeout(() => wrapper.style.transition = '', 500);
       };
 
-      const onStart = (clientX, clientY) => {
+      const onStart = (x, y) => {
         isDragging = true;
-        startX = clientX;
-        startY = clientY;
+        startX = x; startY = y;
         startWidth = wrapper.offsetWidth;
         startHeight = wrapper.offsetHeight;
         startRadius = parseFloat(getComputedStyle(wrapper).borderRadius) || 99;
@@ -481,12 +232,10 @@
         nav.style.cursor = 'grabbing';
       };
 
-      const onMove = (clientX, clientY) => {
+      const onMove = (x, y) => {
         if (!isDragging) return;
-        const dx = clientX - startX;
-        const dy = clientY - startY;
         if (rafId) cancelAnimationFrame(rafId);
-        rafId = requestAnimationFrame(() => applyTransform(dx, dy));
+        rafId = requestAnimationFrame(() => applyTransform(x - startX, y - startY));
       };
 
       const onEnd = () => {
@@ -497,29 +246,26 @@
         nav.style.cursor = 'grab';
       };
 
-      nav.addEventListener('mousedown', (e) => { 
-        if (e.target.closest('.switcher__option')) return; // Не мешаем кликам по вкладкам
-        onStart(e.clientX, e.clientY); 
-        e.preventDefault(); 
-      });
-      
-      window.addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY));
-      window.addEventListener('mouseup', onEnd);
-      
-      nav.addEventListener('touchstart', (e) => { 
+      nav.addEventListener('mousedown', e => {
         if (e.target.closest('.switcher__option')) return;
-        const t = e.touches[0]; 
-        onStart(t.clientX, t.clientY); 
-        e.preventDefault(); 
+        onStart(e.clientX, e.clientY);
+        e.preventDefault();
+      });
+      window.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
+      window.addEventListener('mouseup', onEnd);
+
+      nav.addEventListener('touchstart', e => {
+        if (e.target.closest('.switcher__option')) return;
+        const t = e.touches[0];
+        onStart(t.clientX, t.clientY);
+        e.preventDefault();
       }, { passive: false });
-      
-      window.addEventListener('touchmove', (e) => { 
-        const t = e.touches[0]; 
-        onMove(t.clientX, t.clientY); 
+      window.addEventListener('touchmove', e => {
+        const t = e.touches[0];
+        onMove(t.clientX, t.clientY);
       }, { passive: true });
-      
-      window.addEventListener('touchend', onEnd, { passive: true });
-      window.addEventListener('touchcancel', onEnd, { passive: true });
+      window.addEventListener('touchend', onEnd);
+      window.addEventListener('touchcancel', onEnd);
 
       window.addEventListener('load', () => {
         startWidth = wrapper.offsetWidth;
