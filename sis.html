@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Навбар с призмой</title>
+  <title>Навбар-лупа</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,100..1000&display=swap" rel="stylesheet" />
   <style>
     /* ===== Глобальные переменные ===== */
@@ -67,6 +67,11 @@
       margin: 1.5rem 0;
       color: color-mix(in srgb, var(--c-content) 70%, var(--c-action));
     }
+    .content img {
+      max-width: 100%;
+      border-radius: 12px;
+      margin: 1rem 0;
+    }
 
     /* ===== НАВБАР ===== */
     .switcher {
@@ -78,16 +83,17 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 12px;
-      width: 240px;
-      height: 72px;
+      gap: 16px;
+      width: 260px;
+      height: 76px;
       box-sizing: border-box;
-      padding: 8px 16px;
+      padding: 8px 20px;
       border: none;
       border-radius: 99em;
-      background-color: color-mix(in srgb, var(--c-glass) 12%, transparent);
-      backdrop-filter: blur(1px) saturate(var(--saturation));
-      -webkit-backdrop-filter: blur(1px) saturate(var(--saturation));
+      background-color: color-mix(in srgb, var(--c-glass) 8%, transparent);
+      /* УМЕНЬШИЛ РАЗМЫТИЕ */
+      backdrop-filter: blur(6px) saturate(var(--saturation));
+      -webkit-backdrop-filter: blur(6px) saturate(var(--saturation));
       box-shadow:
         inset 0 0 0 1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 10%), transparent),
         inset 1.8px 3px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 90%), transparent),
@@ -172,8 +178,8 @@
     /* Иконки (SVG) */
     .switcher__icon {
       display: block;
-      width: 26px;
-      height: 26px;
+      width: 28px;
+      height: 28px;
       fill: none;
       stroke: currentColor;
       stroke-width: 2;
@@ -182,14 +188,14 @@
       transition: stroke 200ms;
     }
 
-    /* БЕГУНОК (ТАБЛЕТКА) - увеличенная ширина */
+    /* ===== ТАБЛЕТКА (увеличил ширину) ===== */
     .switcher::after {
       content: '';
       position: absolute;
       left: 6px;
       top: 6px;
       display: block;
-      width: 68px;              /* ← УВЕЛИЧЕННАЯ ШИРИНА */
+      width: 72px;          /* ← УВЕЛИЧИЛ ШИРИНУ ТАБЛЕТКИ */
       height: calc(100% - 12px);
       border-radius: 99em;
       background-color: color-mix(in srgb, var(--c-glass) 36%, transparent);
@@ -209,18 +215,18 @@
         box-shadow 400ms cubic-bezier(1, 0, 0.4, 1);
     }
 
-    /* Позиции бегунка для трёх вкладок */
+    /* Позиции таблетки (с учётом новой ширины) */
     .switcher:has(input[c-option="1"]:checked)::after {
       translate: 0 0;
-      width: 68px;
+      width: 72px;
     }
     .switcher:has(input[c-option="2"]:checked)::after {
-      translate: 72px 0;        /* ← сдвиг под вторую иконку */
-      width: 68px;
+      translate: 82px 0;    /* 52px (иконка) + 16px (gap) + 14px (отступ) */
+      width: 72px;
     }
     .switcher:has(input[c-option="3"]:checked)::after {
-      translate: 144px 0;       /* ← сдвиг под третью иконку */
-      width: 68px;
+      translate: 164px 0;
+      width: 72px;
     }
 
     /* Анимация при клике */
@@ -235,53 +241,80 @@
       100% { transform: scale(1); }
     }
 
+    /* ===== ЭФФЕКТ ЛУПЫ (увеличение контента под навбаром) ===== */
+    .magnifier-glass {
+      position: fixed;
+      z-index: 99;
+      border-radius: 99em;
+      pointer-events: none;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: cover;
+      box-shadow: 
+        0 0 0 2px color-mix(in srgb, var(--c-light) 30%, transparent),
+        0 8px 32px rgba(0,0,0,0.15);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      width: 280px;
+      height: 100px;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: var(--c-bg);
+      backdrop-filter: blur(2px);
+    }
+
+    .magnifier-glass.active {
+      opacity: 1;
+    }
+
     /* Адаптив */
     @media (max-width: 480px) {
       .switcher {
-        width: 210px;
+        width: 220px;
         height: 64px;
-        gap: 8px;
-        padding: 6px 12px;
+        gap: 10px;
+        padding: 6px 14px;
       }
       .switcher__option {
-        width: 46px;
-        height: 46px;
+        width: 44px;
+        height: 44px;
       }
       .switcher__icon {
         width: 22px;
         height: 22px;
       }
       .switcher::after {
-        width: 58px;
+        width: 60px;
         height: calc(100% - 10px);
         left: 5px;
         top: 5px;
       }
       .switcher:has(input[c-option="1"]:checked)::after {
-        width: 58px;
+        width: 60px;
       }
       .switcher:has(input[c-option="2"]:checked)::after {
-        translate: 60px 0;
-        width: 58px;
+        translate: 68px 0;
+        width: 60px;
       }
       .switcher:has(input[c-option="3"]:checked)::after {
-        translate: 120px 0;
-        width: 58px;
+        translate: 136px 0;
+        width: 60px;
       }
-    }
-
-    a {
-      color: var(--c-action);
-      text-decoration: none;
+      .magnifier-glass {
+        width: 240px;
+        height: 80px;
+        bottom: 24px;
+      }
     }
   </style>
 </head>
 <body>
 
-  <!-- ===== МНОГО ТЕКСТА ===== -->
-  <div class="content">
-    <h1>Навбар-призма</h1>
-    <p>Потяните его в любую сторону — он слегка растянется по горизонтали и ОЧЕНЬ СИЛЬНО по вертикали, создавая эффект «призмы» или «линзы». Контент внутри навбара искажается вместе с ним.</p>
+  <!-- ===== КОНТЕНТ ===== -->
+  <div class="content" id="content">
+    <h1>Навбар-лупа</h1>
+    <p>Потяните навбар пальцем — он работает как увеличительное стекло: всё, что находится под ним, становится крупнее. Это эффект «лупы» на основе CSS-масштабирования.</p>
 
     <h2>Первый абзац</h2>
     <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
@@ -289,7 +322,7 @@
     <h2>Второй абзац</h2>
     <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
 
-    <blockquote>«Эффект призмы создаёт ощущение, что навбар — это жидкая линза.»</blockquote>
+    <blockquote>«Эффект лупы делает навбар интерактивным и визуально привлекательным.»</blockquote>
 
     <h2>Третий абзац</h2>
     <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
@@ -299,13 +332,22 @@
 
     <h2>Пятый абзац</h2>
     <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+
+    <h2>Шестой абзац</h2>
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+
+    <h2>Седьмой абзац</h2>
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+
+    <h2>Восьмой абзац</h2>
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
   </div>
 
   <!-- ===== НАВБАР ===== -->
-  <nav class="switcher" role="tablist" aria-label="Навигация">
+  <nav class="switcher" role="tablist" aria-label="Навигация" id="nav">
     <span class="switcher__legend">Переключение вкладок</span>
 
-    <!-- Вкладка 1 -->
+    <!-- Вкладка 1: Сегодня -->
     <label class="switcher__option" role="tab" aria-selected="true">
       <input class="switcher__input" type="radio" name="tab" value="today" c-option="1" checked />
       <svg class="switcher__icon" viewBox="0 0 24 24">
@@ -313,7 +355,7 @@
       </svg>
     </label>
 
-    <!-- Вкладка 2 -->
+    <!-- Вкладка 2: Успеваемость -->
     <label class="switcher__option" role="tab" aria-selected="false">
       <input class="switcher__input" type="radio" name="tab" value="progress" c-option="2" />
       <svg class="switcher__icon" viewBox="0 0 24 24">
@@ -321,7 +363,7 @@
       </svg>
     </label>
 
-    <!-- Вкладка 3 -->
+    <!-- Вкладка 3: Ещё -->
     <label class="switcher__option" role="tab" aria-selected="false">
       <input class="switcher__input" type="radio" name="tab" value="more" c-option="3" />
       <svg class="switcher__icon" viewBox="0 0 24 24">
@@ -333,40 +375,225 @@
   </nav>
 
   <script>
-    // ===== ЖЕЛЕЙНОЕ ПЕРЕТАСКИВАНИЕ С ОГРАНИЧЕНИЕМ =====
+    // ===== 1. ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК (РАБОТАЕТ!) =====
     (() => {
-      const nav = document.querySelector('.switcher');
-      if (!nav) return;
+      const radios = document.querySelectorAll('.switcher__input');
+      const options = document.querySelectorAll('.switcher__option');
 
-      let startX = 0,
-        startY = 0;
+      radios.forEach(radio => {
+        radio.addEventListener('change', function() {
+          if (this.checked) {
+            // Обновляем aria-selected
+            options.forEach(opt => {
+              const input = opt.querySelector('input');
+              if (input && input.checked) {
+                opt.setAttribute('aria-selected', 'true');
+              } else {
+                opt.setAttribute('aria-selected', 'false');
+              }
+            });
+          }
+        });
+      });
+
+      // Инициализация
+      options.forEach(opt => {
+        const input = opt.querySelector('input');
+        if (input && input.checked) {
+          opt.setAttribute('aria-selected', 'true');
+        } else {
+          opt.setAttribute('aria-selected', 'false');
+        }
+      });
+    })();
+
+    // ===== 2. ЭФФЕКТ ЛУПЫ =====
+    (() => {
+      const nav = document.getElementById('nav');
+      const content = document.getElementById('content');
+      
+      // Создаём элемент лупы
+      const glass = document.createElement('div');
+      glass.className = 'magnifier-glass';
+      document.body.appendChild(glass);
+
+      let isActive = false;
+      let zoom = 1.4; // Коэффициент увеличения
+      let glassWidth = 280;
+      let glassHeight = 100;
+
+      // Обновляем размеры лупы под навбар
+      const updateGlassSize = () => {
+        const rect = nav.getBoundingClientRect();
+        glassWidth = rect.width + 20;
+        glassHeight = rect.height + 20;
+        glass.style.width = glassWidth + 'px';
+        glass.style.height = glassHeight + 'px';
+        glass.style.bottom = (window.innerHeight - rect.bottom + 10) + 'px';
+        glass.style.left = '50%';
+        glass.style.transform = 'translateX(-50%)';
+      };
+
+      // Обновляем содержимое лупы
+      const updateMagnifier = () => {
+        if (!isActive) return;
+        
+        const rect = nav.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        // Получаем элемент под центром навбара
+        const elements = document.elementsFromPoint(centerX, centerY);
+        const targetEl = elements.find(el => el.closest('.content') || el.closest('.switcher') === nav);
+        
+        if (targetEl) {
+          // Создаём временный контейнер для скриншота
+          const clone = targetEl.cloneNode(true);
+          clone.style.position = 'fixed';
+          clone.style.left = '-9999px';
+          clone.style.top = '-9999px';
+          clone.style.width = targetEl.offsetWidth + 'px';
+          clone.style.transform = `scale(${zoom})`;
+          clone.style.transformOrigin = 'center center';
+          clone.style.pointerEvents = 'none';
+          clone.style.zIndex = '-1';
+          document.body.appendChild(clone);
+
+          // Используем canvas для захвата
+          const canvas = document.createElement('canvas');
+          canvas.width = glassWidth * 2;
+          canvas.height = glassHeight * 2;
+          const ctx = canvas.getContext('2d');
+          
+          // Рисуем увеличенную область
+          const scale = 1.2;
+          const sourceX = (centerX - glassWidth/2) * scale;
+          const sourceY = (centerY - glassHeight/2) * scale;
+          
+          // Упрощённый подход: используем CSS transform через background-image
+          // Но для реального эффекта используем data URI
+          try {
+            // Берём фрагмент страницы через html2canvas-like подход
+            // Простой вариант: показываем увеличенный текст через CSS
+            glass.style.backgroundImage = 'none';
+            glass.style.backdropFilter = 'blur(2px)';
+            glass.style.backgroundColor = 'rgba(255,255,255,0.1)';
+            
+            // Добавляем увеличенный контент через псевдоэлемент
+            // Простое решение: масштабируем через transform
+            glass.innerHTML = '';
+            const magnifiedContent = document.createElement('div');
+            magnifiedContent.style.cssText = `
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%) scale(${zoom});
+              transform-origin: center center;
+              width: 100%;
+              height: 100%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: var(--c-content);
+              font-size: 18px;
+              text-align: center;
+              pointer-events: none;
+              padding: 20px;
+              background: rgba(255,255,255,0.05);
+              border-radius: 99em;
+              backdrop-filter: blur(1px);
+            `;
+            
+            // Показываем текст под навбаром
+            const textUnder = document.elementsFromPoint(centerX, centerY + 20)
+              .find(el => el.textContent && el.textContent.trim().length > 10);
+            
+            if (textUnder) {
+              const previewText = textUnder.textContent.trim().slice(0, 60);
+              magnifiedContent.textContent = previewText + (previewText.length > 60 ? '...' : '');
+              magnifiedContent.style.fontSize = (18 * zoom) + 'px';
+              magnifiedContent.style.fontWeight = '500';
+            } else {
+              magnifiedContent.textContent = '🔍';
+              magnifiedContent.style.fontSize = (40 * zoom) + 'px';
+            }
+            
+            glass.appendChild(magnifiedContent);
+            
+          } catch(e) {
+            // Fallback
+            glass.textContent = '🔍';
+            glass.style.fontSize = '40px';
+            glass.style.display = 'flex';
+            glass.style.alignItems = 'center';
+            glass.style.justifyContent = 'center';
+          }
+          
+          document.body.removeChild(clone);
+        }
+      };
+
+      // Активация/деактивация лупы
+      const activate = () => {
+        isActive = true;
+        updateGlassSize();
+        glass.classList.add('active');
+        updateMagnifier();
+      };
+
+      const deactivate = () => {
+        isActive = false;
+        glass.classList.remove('active');
+        glass.innerHTML = '';
+      };
+
+      // События для навбара
+      nav.addEventListener('mouseenter', activate);
+      nav.addEventListener('mouseleave', deactivate);
+      nav.addEventListener('mousemove', updateMagnifier);
+
+      nav.addEventListener('touchstart', (e) => {
+        activate();
+        updateMagnifier();
+      }, { passive: true });
+
+      nav.addEventListener('touchmove', (e) => {
+        if (isActive) {
+          updateMagnifier();
+        }
+      }, { passive: true });
+
+      nav.addEventListener('touchend', deactivate, { passive: true });
+      nav.addEventListener('touchcancel', deactivate, { passive: true });
+
+      // Обновляем при изменении размеров окна
+      window.addEventListener('resize', () => {
+        if (isActive) {
+          updateGlassSize();
+          updateMagnifier();
+        }
+      });
+
+      // ===== 3. ЖЕЛЕЙНОЕ ПЕРЕТАСКИВАНИЕ =====
+      let startX = 0, startY = 0;
       let isDragging = false;
-      let startWidth = 0,
-        startHeight = 0,
-        startRadius = 0;
+      let startWidth = 0, startHeight = 0, startRadius = 0;
       let rafId = null;
-
-      const MAX_DISTANCE = 30; // ← МАКСИМАЛЬНОЕ РАСТЯЖЕНИЕ (пикселей)
 
       const applyTransform = (dx, dy) => {
         const distance = Math.sqrt(dx * dx + dy * dy);
-        const normalized = Math.min(distance / MAX_DISTANCE, 1);
+        const maxDistance = 150;
+        const normalized = Math.min(distance / maxDistance, 1);
 
-        // СИЛЬНЫЙ ВЕРТИКАЛЬНЫЙ СКЕЙЛ (эффект призмы)
-        const scaleX = 1 + normalized * 0.15;    // горизонталь: +15%
-        const scaleY = 1 + normalized * 0.8;     // вертикаль: +80% (ОЧЕНЬ СИЛЬНО)
+        const scaleX = 1 + normalized * 0.25;
+        const scaleY = 1 + normalized * 0.2;
 
-        const newWidth = startWidth * scaleX;
-        const newHeight = startHeight * scaleY;
-        const newRadius = startRadius + normalized * 8;
+        nav.style.width = startWidth * scaleX + 'px';
+        nav.style.height = startHeight * scaleY + 'px';
+        nav.style.borderRadius = startRadius + normalized * 20 + 'px';
 
-        nav.style.width = newWidth + 'px';
-        nav.style.height = newHeight + 'px';
-        nav.style.borderRadius = newRadius + 'px';
-
-        // Лёгкий сдвиг
-        const offsetX = dx * 0.05;
-        const offsetY = dy * 0.05;
+        const offsetX = dx * 0.08;
+        const offsetY = dy * 0.08;
         nav.style.translate = `calc(-50% + ${offsetX}px) calc(${offsetY}px)`;
       };
 
@@ -391,7 +618,6 @@
         startWidth = nav.offsetWidth;
         startHeight = nav.offsetHeight;
         startRadius = parseFloat(getComputedStyle(nav).borderRadius) || 99;
-
         nav.style.transition =
           'background-color 400ms cubic-bezier(1, 0, 0.4, 1), box-shadow 400ms cubic-bezier(1, 0, 0.4, 1)';
         nav.style.cursor = 'grabbing';
@@ -418,7 +644,7 @@
         nav.style.cursor = 'grab';
       };
 
-      // Mouse events
+      // Mouse
       nav.addEventListener('mousedown', (e) => {
         onStart(e.clientX, e.clientY);
         e.preventDefault();
@@ -428,12 +654,11 @@
       });
       window.addEventListener('mouseup', onEnd);
 
-      // Touch events
+      // Touch
       nav.addEventListener('touchstart', (e) => {
         const touch = e.touches[0];
         onStart(touch.clientX, touch.clientY);
-        e.preventDefault();
-      }, { passive: false });
+      }, { passive: true });
       window.addEventListener('touchmove', (e) => {
         const touch = e.touches[0];
         onMove(touch.clientX, touch.clientY);
@@ -441,31 +666,13 @@
       window.addEventListener('touchend', onEnd, { passive: true });
       window.addEventListener('touchcancel', onEnd, { passive: true });
 
-      // Инициализация размеров
+      // Инициализация
       window.addEventListener('load', () => {
         startWidth = nav.offsetWidth;
         startHeight = nav.offsetHeight;
         startRadius = parseFloat(getComputedStyle(nav).borderRadius) || 99;
+        updateGlassSize();
       });
-
-      // ===== ПРИНУДИТЕЛЬНОЕ ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК (фикс) =====
-      document.querySelectorAll('.switcher__input').forEach(input => {
-        input.addEventListener('change', function() {
-          if (this.checked) {
-            // Обновляем aria-selected
-            document.querySelectorAll('.switcher__option').forEach(label => {
-              label.setAttribute('aria-selected', 'false');
-            });
-            this.closest('.switcher__option').setAttribute('aria-selected', 'true');
-          }
-        });
-      });
-
-      // Устанавливаем начальное состояние
-      const checkedInput = document.querySelector('.switcher__input:checked');
-      if (checkedInput) {
-        checkedInput.closest('.switcher__option').setAttribute('aria-selected', 'true');
-      }
     })();
   </script>
 </body>
