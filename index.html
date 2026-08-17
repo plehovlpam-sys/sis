@@ -49,8 +49,15 @@
     max-width: 420px;
     margin: 0 auto;
     padding: 24px 18px 40px;
+    /* СКРУГЛЕНИЕ УБРАНО В ОБЫЧНОМ СОСТОЯНИИ */
+    border-radius: 0;
+    overflow: visible;
+    transition: border-radius 0.4s ease;
+  }
+
+  .page.rounded {
     border-radius: 34px;
-    overflow: hidden; /* СКРУГЛЕНИЕ КОНТЕЙНЕРА */
+    overflow: hidden;
   }
 
   .viewport{
@@ -60,7 +67,12 @@
     touch-action: pan-y;
     user-select: none;
     cursor: grab;
-    border-radius: 34px; /* СКРУГЛЕНИЕ ДЛЯ ПЛЕЙСХОЛДЕРА */
+    border-radius: 0;
+    transition: border-radius 0.4s ease;
+  }
+
+  .viewport.rounded {
+    border-radius: 34px;
   }
 
   .track{
@@ -319,8 +331,7 @@
 </head>
 <body>
 
-<div class="page">
-
+<div class="page" id="page">
   <div class="viewport" id="viewport">
     <div class="track" id="track">
 
@@ -356,7 +367,6 @@
     <button class="dot active" data-go="0" aria-label="Вкладка 1"></button>
     <button class="dot" data-go="1" aria-label="Вкладка 2"></button>
   </div>
-
 </div>
 
 <div class="overlay" id="overlay"></div>
@@ -426,7 +436,6 @@
 
     // Клик по QR для расширения
     qrWrapper.addEventListener('click', function(e) {
-      // Не срабатывает если клик по кнопке закрытия
       if (e.target.closest('.close-btn')) return;
       if (!isExpanded) {
         expandQR();
@@ -461,6 +470,7 @@
 
     var viewport = document.getElementById('viewport');
     var track = document.getElementById('track');
+    var page = document.getElementById('page');
     var fx = [document.getElementById('fx-0'), document.getElementById('fx-1')];
     var dots = Array.prototype.slice.call(document.querySelectorAll('.dot'));
 
@@ -474,6 +484,7 @@
     var axis = null;
     var vw = viewport.getBoundingClientRect().width || 1;
     var heights = [0, 0];
+    var isDragging = false;
 
     function measureHeights(){
       heights[0] = fx[0].offsetHeight;
@@ -585,7 +596,14 @@
           resetFx(el);
         });
         applyTrack(-startIndex * 50);
-        window.setTimeout(function(){ animating = false; }, 440);
+        window.setTimeout(function(){ 
+          animating = false;
+          // Убираем скругление после анимации
+          if (!isDragging) {
+            page.classList.remove('rounded');
+            viewport.classList.remove('rounded');
+          }
+        }, 440);
         return;
       }
 
@@ -624,16 +642,26 @@
         resetFx(leaving);
         resetFx(entering);
         animating = false;
+        // Убираем скругление после анимации
+        if (!isDragging) {
+          page.classList.remove('rounded');
+          viewport.classList.remove('rounded');
+        }
       }, 440);
     }
 
     function onDown(x, y){
       if(animating) return;
       dragging = true;
+      isDragging = true;
       startX = x;
       startY = y;
       dx = 0;
       axis = null;
+      
+      // Добавляем скругление при начале перетаскивания
+      page.classList.add('rounded');
+      viewport.classList.add('rounded');
     }
 
     function onMove(x, y){
@@ -666,7 +694,16 @@
     function onUp(){
       if(!dragging) return;
       dragging = false;
-      if(axis !== 'x'){ axis = null; dx = 0; return; }
+      isDragging = false;
+      
+      if(axis !== 'x'){ 
+        axis = null; 
+        dx = 0; 
+        // Убираем скругление если не было свайпа
+        page.classList.remove('rounded');
+        viewport.classList.remove('rounded');
+        return; 
+      }
       axis = null;
 
       var dir = dx < 0 ? 1 : -1;
@@ -714,6 +751,9 @@
         if(animating) return;
         var idx = parseInt(d.getAttribute('data-go'), 10);
         if(idx === current) return;
+        // Добавляем скругление при клике на точки
+        page.classList.add('rounded');
+        viewport.classList.add('rounded');
         animateTransition(idx);
       });
     });
