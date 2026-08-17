@@ -27,6 +27,11 @@
     --gray-dot: #cfcdc6;
     --font-head: 'Master', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
     --font-body: 'Masterun', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+    
+    /* НАСТРОЙКИ РАЗМЕРОВ */
+    --pill-padding: 37px 22px;  /* вертикальные отступы (высота) | горизонтальные */
+    --qr-size: 120px;            /* размер QR-кода (ширина и высота) */
+    --qr-gap: 7px;             /* отступ между пилюлей и QR-кодом */
   }
 
   *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -75,13 +80,14 @@
     will-change: transform, filter, opacity;
   }
 
-  /* ---------- slide 1 : card + barcode ---------- */
+  /* ---------- slide 1 : card + qr (по центру) ---------- */
 
   .card-row{
     display:flex;
-    align-items:stretch;
+    align-items:center;
+    justify-content:center;
     width:100%;
-    gap: 0;
+    gap: var(--qr-gap);
   }
 
   .pill{
@@ -90,7 +96,7 @@
     display:flex;
     align-items:center;
     gap: 8px;
-    padding: 17px 22px 17px 22px;
+    padding: var(--pill-padding);
     border-radius: 999px;
     overflow: hidden;
     background: linear-gradient(115deg,
@@ -110,7 +116,7 @@
     font-family: var(--font-head);
     font-weight: 800;
     color: #fff;
-    font-size: 30px;
+    font-size: 36px;
     line-height: 1;
     letter-spacing: 0.01em;
     white-space: nowrap;
@@ -122,29 +128,38 @@
     color: var(--ink);
     font-family: var(--font-head);
     font-weight: 800;
-    font-size: 16px;
+    font-size: 20px;
     padding: 7px 14px;
     border-radius: 999px;
     line-height: 1;
     white-space: nowrap;
   }
 
-  .barcode-box{
+  .qr-box{
     flex: 0 0 auto;
-    width: 84px;
+    width: var(--qr-size);
+    height: var(--qr-size);
     display:flex;
     align-items:center;
     justify-content:center;
     background: #fff;
     border-radius: 999px;
-    padding: 12px 12px 12px 8px;
-    margin-left: -12px;
+    padding: 6px;
   }
 
-  .barcode-box svg{
+  .qr-box #qrcode {
     width: 100%;
     height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-box #qrcode img,
+  .qr-box #qrcode canvas {
     display: block;
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 4px;
   }
 
   /* ---------- slide 2 : invite ---------- */
@@ -238,8 +253,8 @@
               <span class="pill-number">459 Б</span>
               <span class="pill-tag">*0039</span>
             </div>
-            <div class="barcode-box">
-              <svg id="barcode"></svg>
+            <div class="qr-box">
+              <div id="qrcode"></div>
             </div>
           </div>
         </div>
@@ -265,47 +280,29 @@
 
 </div>
 
+<!-- Подключаем библиотеку QRCode -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
 <script>
 
-  function renderBarcode(svg, data){
-    if(!svg) return;
-    var seed = 0;
-    for(var i = 0; i < data.length; i++){
-      seed = (seed * 31 + data.charCodeAt(i)) >>> 0;
+  // Генерация QR-кода с номером 9999
+  (function() {
+    var container = document.getElementById('qrcode');
+    if (container && typeof QRCode !== 'undefined') {
+      // Размер QR-кода внутри контейнера (чуть меньше, чем контейнер)
+      var qrSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--qr-size')) || 94;
+      var innerSize = qrSize - 12; // отступы внутри белого круга
+      
+      new QRCode(container, {
+        text: '9999',
+        width: innerSize,
+        height: innerSize,
+        colorDark: '#0c0c0c',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
     }
-    function rand(){
-      seed = (seed * 1103515245 + 12345) >>> 0;
-      return (seed >>> 8) / 16777216;
-    }
-
-    var ns = 'http://www.w3.org/2000/svg';
-    var barCount = 34;
-    var x = 0;
-    var frag = document.createDocumentFragment();
-
-    for(var i = 0; i < barCount; i++){
-      var isBar = i % 2 === 0;
-      var w = isBar ? (2 + Math.floor(rand() * 3)) : (1 + Math.floor(rand() * 2));
-      if(isBar){
-        var rect = document.createElementNS(ns, 'rect');
-        rect.setAttribute('x', x);
-        rect.setAttribute('y', 0);
-        rect.setAttribute('width', w);
-        rect.setAttribute('height', 100);
-        rect.setAttribute('fill', '#0c0c0c');
-        frag.appendChild(rect);
-      }
-      x += w;
-    }
-
-    svg.setAttribute('viewBox', '0 0 ' + x + ' 100');
-    svg.setAttribute('preserveAspectRatio', 'none');
-    svg.appendChild(frag);
-  }
-
-  try{
-    renderBarcode(document.getElementById('barcode'), '9999');
-  } catch(e){}
+  })();
 
 </script>
 
