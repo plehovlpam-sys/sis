@@ -42,7 +42,6 @@
     background: #ffffff;
     color: var(--ink);
     font-family: var(--font-body);
-    overflow-x: hidden;
   }
 
   .page{
@@ -51,9 +50,8 @@
     margin: 0 auto;
     padding: 24px 18px 40px;
     border-radius: 0;
-    overflow: visible;
-    transition: border-radius 0.6s cubic-bezier(.22,.68,0,1);
-    position: relative;
+    overflow: hidden;
+    transition: border-radius 0.4s cubic-bezier(.22,.68,0,1);
   }
 
   .page.rounded {
@@ -68,7 +66,7 @@
     user-select: none;
     cursor: grab;
     border-radius: 0;
-    transition: border-radius 0.6s cubic-bezier(.22,.68,0,1);
+    transition: border-radius 0.4s cubic-bezier(.22,.68,0,1);
   }
 
   .viewport.rounded {
@@ -119,13 +117,6 @@
       var(--pink) 68%, var(--red) 88%, var(--pink) 100%);
     background-size: 320% 320%;
     animation: flow 7s ease-in-out infinite;
-    transition: opacity 0.5s ease, transform 0.5s ease;
-  }
-
-  .pill.hidden {
-    opacity: 0;
-    transform: scale(0.8);
-    pointer-events: none;
   }
 
   @keyframes flow{
@@ -158,7 +149,6 @@
   }
 
   .qr-wrapper {
-    position: relative;
     flex: 0 0 auto;
     width: var(--qr-size);
     height: var(--qr-size);
@@ -168,24 +158,7 @@
     background: #fff;
     border-radius: 999px;
     padding: 6px;
-    cursor: pointer;
-    transition: all 0.5s cubic-bezier(.22,.68,0,1);
-    z-index: 1;
-  }
-
-  .qr-wrapper.expanded {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(1) !important;
-    width: 320px;
-    height: 320px;
-    border-radius: 30px;
-    padding: 20px;
-    background: #ffffff;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    z-index: 1000;
-    cursor: default;
+    pointer-events: none;
   }
 
   .qr-wrapper #qrcode {
@@ -201,55 +174,6 @@
     width: 100% !important;
     height: 100% !important;
     border-radius: 4px;
-    transition: all 0.5s cubic-bezier(.22,.68,0,1);
-  }
-
-  .close-btn {
-    position: absolute;
-    top: -12px;
-    right: -12px;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: var(--ink);
-    color: #fff;
-    border: none;
-    font-size: 20px;
-    cursor: pointer;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    transition: transform 0.3s ease;
-    z-index: 1001;
-    font-family: Arial, sans-serif;
-    line-height: 1;
-  }
-
-  .close-btn:hover {
-    transform: scale(1.1);
-  }
-
-  .close-btn.visible {
-    display: flex;
-  }
-
-  .overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.5s ease;
-    z-index: 999;
-  }
-
-  .overlay.active {
-    opacity: 1;
-    pointer-events: auto;
   }
 
   /* ---------- slide 2 : invite ---------- */
@@ -338,13 +262,12 @@
       <div class="slide" data-index="0">
         <div class="fx" id="fx-0">
           <div class="card-row">
-            <div class="pill" id="pill">
+            <div class="pill">
               <span class="pill-number">459 Б</span>
               <span class="pill-tag">*0039</span>
             </div>
-            <div class="qr-wrapper" id="qrWrapper">
+            <div class="qr-wrapper">
               <div id="qrcode"></div>
-              <button class="close-btn" id="closeBtn">✕</button>
             </div>
           </div>
         </div>
@@ -369,8 +292,6 @@
   </div>
 </div>
 
-<div class="overlay" id="overlay"></div>
-
 <!-- Подключаем библиотеку QRCode -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
@@ -392,74 +313,6 @@
         correctLevel: QRCode.CorrectLevel.M
       });
     }
-  })();
-
-  // Логика расширения QR-кода
-  (function() {
-    var qrWrapper = document.getElementById('qrWrapper');
-    var pill = document.getElementById('pill');
-    var closeBtn = document.getElementById('closeBtn');
-    var overlay = document.getElementById('overlay');
-    var isExpanded = false;
-
-    function expandQR() {
-      if (isExpanded) return;
-      isExpanded = true;
-      
-      // Скрываем пилюлю
-      pill.classList.add('hidden');
-      
-      // Расширяем QR
-      qrWrapper.classList.add('expanded');
-      closeBtn.classList.add('visible');
-      overlay.classList.add('active');
-      
-      // Блокируем скролл
-      document.body.style.overflow = 'hidden';
-    }
-
-    function collapseQR() {
-      if (!isExpanded) return;
-      isExpanded = false;
-      
-      // Показываем пилюлю
-      pill.classList.remove('hidden');
-      
-      // Сворачиваем QR
-      qrWrapper.classList.remove('expanded');
-      closeBtn.classList.remove('visible');
-      overlay.classList.remove('active');
-      
-      // Возвращаем скролл
-      document.body.style.overflow = '';
-    }
-
-    // Клик по QR для расширения
-    qrWrapper.addEventListener('click', function(e) {
-      if (e.target.closest('.close-btn')) return;
-      if (!isExpanded) {
-        expandQR();
-      }
-    });
-
-    // Клик по кнопке закрытия
-    closeBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      collapseQR();
-    });
-
-    // Клик по оверлею
-    overlay.addEventListener('click', function() {
-      collapseQR();
-    });
-
-    // Escape для закрытия
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape' && isExpanded) {
-        collapseQR();
-      }
-    });
-
   })();
 
 </script>
@@ -484,8 +337,6 @@
     var axis = null;
     var vw = viewport.getBoundingClientRect().width || 1;
     var heights = [0, 0];
-    var isDragging = false;
-    var roundingTimeout = null;
 
     function measureHeights(){
       heights[0] = fx[0].offsetHeight;
@@ -517,16 +368,6 @@
           setViewportHeight(heights[current], false);
         }
       }).catch(function(){});
-    }
-
-    function addRounding() {
-      page.classList.add('rounded');
-      viewport.classList.add('rounded');
-    }
-
-    function removeRounding() {
-      page.classList.remove('rounded');
-      viewport.classList.remove('rounded');
     }
 
     function setDots(idx){
@@ -607,15 +448,7 @@
           resetFx(el);
         });
         applyTrack(-startIndex * 50);
-        window.setTimeout(function(){ 
-          animating = false;
-          // Убираем скругление через 0.6 секунд
-          if (!isDragging) {
-            setTimeout(function() {
-              removeRounding();
-            }, 600);
-          }
-        }, 440);
+        window.setTimeout(function(){ animating = false; }, 440);
         return;
       }
 
@@ -654,32 +487,20 @@
         resetFx(leaving);
         resetFx(entering);
         animating = false;
-        // Убираем скругление через 0.6 секунд
-        if (!isDragging) {
-          setTimeout(function() {
-            removeRounding();
-          }, 600);
-        }
       }, 440);
     }
 
     function onDown(x, y){
       if(animating) return;
       dragging = true;
-      isDragging = true;
       startX = x;
       startY = y;
       dx = 0;
       axis = null;
       
-      // Очищаем таймаут удаления скругления
-      if (roundingTimeout) {
-        clearTimeout(roundingTimeout);
-        roundingTimeout = null;
-      }
-      
-      // Добавляем скругление при начале перетаскивания
-      addRounding();
+      // Добавляем скругление в реальном времени
+      page.classList.add('rounded');
+      viewport.classList.add('rounded');
     }
 
     function onMove(x, y){
@@ -712,15 +533,13 @@
     function onUp(){
       if(!dragging) return;
       dragging = false;
-      isDragging = false;
       
       if(axis !== 'x'){ 
         axis = null; 
         dx = 0; 
-        // Убираем скругление через 0.6 секунд если не было свайпа
-        roundingTimeout = setTimeout(function() {
-          removeRounding();
-        }, 600);
+        // Убираем скругление в реальном времени
+        page.classList.remove('rounded');
+        viewport.classList.remove('rounded');
         return; 
       }
       axis = null;
@@ -732,13 +551,28 @@
       if(target < 0 || target >= COUNT || Math.abs(dx) < 2){
         animateTransition(current);
         dx = 0;
+        // Убираем скругление после анимации
+        setTimeout(function() {
+          page.classList.remove('rounded');
+          viewport.classList.remove('rounded');
+        }, 440);
         return;
       }
 
       if(p > 0.28){
         animateTransition(target);
+        // Убираем скругление после анимации
+        setTimeout(function() {
+          page.classList.remove('rounded');
+          viewport.classList.remove('rounded');
+        }, 440);
       } else {
         animateTransition(current);
+        // Убираем скругление после анимации
+        setTimeout(function() {
+          page.classList.remove('rounded');
+          viewport.classList.remove('rounded');
+        }, 440);
       }
       dx = 0;
     }
@@ -770,13 +604,18 @@
         if(animating) return;
         var idx = parseInt(d.getAttribute('data-go'), 10);
         if(idx === current) return;
-        // Добавляем скругление при клике на точки
-        addRounding();
+        
+        // Добавляем скругление в реальном времени
+        page.classList.add('rounded');
+        viewport.classList.add('rounded');
+        
         animateTransition(idx);
-        // Убираем скругление через 0.6 секунд после анимации
-        roundingTimeout = setTimeout(function() {
-          removeRounding();
-        }, 600 + 440);
+        
+        // Убираем скругление после анимации
+        setTimeout(function() {
+          page.classList.remove('rounded');
+          viewport.classList.remove('rounded');
+        }, 440);
       });
     });
 
