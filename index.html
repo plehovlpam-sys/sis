@@ -32,6 +32,7 @@
     --pill-padding: 37px 17px;
     --qr-size: 120px;
     --qr-gap: 7px;
+    --border-radius-max: 34px;
   }
 
   *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -49,13 +50,9 @@
     max-width: 420px;
     margin: 0 auto;
     padding: 24px 18px 40px;
-    border-radius: 0;
+    border-radius: 0px;
     overflow: hidden;
-    transition: border-radius 0.4s cubic-bezier(.22,.68,0,1);
-  }
-
-  .page.rounded {
-    border-radius: 34px;
+    transition: border-radius 0.05s linear;
   }
 
   .viewport{
@@ -65,12 +62,8 @@
     touch-action: pan-y;
     user-select: none;
     cursor: grab;
-    border-radius: 0;
-    transition: border-radius 0.4s cubic-bezier(.22,.68,0,1);
-  }
-
-  .viewport.rounded {
-    border-radius: 34px;
+    border-radius: 0px;
+    transition: border-radius 0.05s linear;
   }
 
   .track{
@@ -337,6 +330,7 @@
     var axis = null;
     var vw = viewport.getBoundingClientRect().width || 1;
     var heights = [0, 0];
+    var maxRadius = 34;
 
     function measureHeights(){
       heights[0] = fx[0].offsetHeight;
@@ -350,8 +344,17 @@
       viewport.style.height = px + 'px';
     }
 
+    function setBorderRadius(progress) {
+      // progress: 0 - нет скругления, 1 - максимальное скругление
+      var radius = progress * maxRadius;
+      var radiusPx = radius + 'px';
+      page.style.borderRadius = radiusPx;
+      viewport.style.borderRadius = radiusPx;
+    }
+
     measureHeights();
     setViewportHeight(heights[current], false);
+    setBorderRadius(0);
 
     window.addEventListener('resize', function(){
       vw = viewport.getBoundingClientRect().width || 1;
@@ -433,6 +436,9 @@
       var dragPercent = (dx / vw) * 50;
       setTrackTransition(false);
       applyTrack(basePercent + dragPercent);
+      
+      // Обновляем скругление в реальном времени в зависимости от прогресса
+      setBorderRadius(p);
     }
 
     function animateTransition(targetIndex){
@@ -448,7 +454,10 @@
           resetFx(el);
         });
         applyTrack(-startIndex * 50);
-        window.setTimeout(function(){ animating = false; }, 440);
+        window.setTimeout(function(){ 
+          animating = false;
+          setBorderRadius(0);
+        }, 440);
         return;
       }
 
@@ -487,6 +496,7 @@
         resetFx(leaving);
         resetFx(entering);
         animating = false;
+        setBorderRadius(0);
       }, 440);
     }
 
@@ -497,10 +507,6 @@
       startY = y;
       dx = 0;
       axis = null;
-      
-      // Добавляем скругление в реальном времени
-      page.classList.add('rounded');
-      viewport.classList.add('rounded');
     }
 
     function onMove(x, y){
@@ -523,6 +529,7 @@
         dx = 0;
         setTrackTransition(false);
         applyTrack(-current * 50);
+        setBorderRadius(0);
         return;
       }
 
@@ -537,9 +544,7 @@
       if(axis !== 'x'){ 
         axis = null; 
         dx = 0; 
-        // Убираем скругление в реальном времени
-        page.classList.remove('rounded');
-        viewport.classList.remove('rounded');
+        setBorderRadius(0);
         return; 
       }
       axis = null;
@@ -551,28 +556,13 @@
       if(target < 0 || target >= COUNT || Math.abs(dx) < 2){
         animateTransition(current);
         dx = 0;
-        // Убираем скругление после анимации
-        setTimeout(function() {
-          page.classList.remove('rounded');
-          viewport.classList.remove('rounded');
-        }, 440);
         return;
       }
 
       if(p > 0.28){
         animateTransition(target);
-        // Убираем скругление после анимации
-        setTimeout(function() {
-          page.classList.remove('rounded');
-          viewport.classList.remove('rounded');
-        }, 440);
       } else {
         animateTransition(current);
-        // Убираем скругление после анимации
-        setTimeout(function() {
-          page.classList.remove('rounded');
-          viewport.classList.remove('rounded');
-        }, 440);
       }
       dx = 0;
     }
@@ -604,18 +594,7 @@
         if(animating) return;
         var idx = parseInt(d.getAttribute('data-go'), 10);
         if(idx === current) return;
-        
-        // Добавляем скругление в реальном времени
-        page.classList.add('rounded');
-        viewport.classList.add('rounded');
-        
         animateTransition(idx);
-        
-        // Убираем скругление после анимации
-        setTimeout(function() {
-          page.classList.remove('rounded');
-          viewport.classList.remove('rounded');
-        }, 440);
       });
     });
 
